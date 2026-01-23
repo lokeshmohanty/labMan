@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Activate Account - {{ lab_name }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: center; align-items: center; min-height: 80vh;">
+    <div class="card" style="max-width: 500px; width: 100%;">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h1 style="color: var(--primary); font-size: 2.5rem; margin-bottom: 0.5rem;">{{ lab_name }}</h1>
+            <p style="color: var(--text-light); font-size: 1.1rem;">Activate Your Account</p>
+        </div>
+        
+        <div class="card-header">Set Your Password</div>
+        
+        <form method="POST">
+            <div class="form-group">
+                <label for="new_password">New Password</label>
+                <input type="password" id="new_password" name="new_password" 
+                       class="form-control" required minlength="6"
+                       placeholder="Enter password (minimum 6 characters)">
+            </div>
+            
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" 
+                       class="form-control" required minlength="6"
+                       placeholder="Re-enter password">
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                Activate Account
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.querySelector('form').addEventListener('submit', function(e) {
+    const newPassword = document.getElementById('new_password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    
+    if (newPassword !== confirmPassword) {
+        e.preventDefault();
+        alert('Passwords do not match!');
+    }
+});
+</script>
+{% endblock %}

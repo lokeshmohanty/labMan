@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Login - {{ lab_name }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: center; align-items: center; min-height: 80vh;">
+    <div class="card" style="max-width: 500px; width: 100%;">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h1 style="color: var(--primary); font-size: 2.5rem; margin-bottom: 0.5rem;">{{ lab_name }}</h1>
+            <p style="color: var(--text-light); font-size: 1.1rem;">Indian Institute of Science</p>
+        </div>
+
+        <div class="card-header">Login to Your Account</div>
+
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" class="form-control" required
+                    placeholder="your.email@iisc.ac.in">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" required
+                    placeholder="Enter your password">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                Login
+            </button>
+        </form>
+
+        <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); text-align: center;">
+            <a href="{{ url_for('forgot_password') }}"
+                style="color: var(--primary); text-decoration: none; margin-bottom: 1rem; display: block;">
+                Forgot your password?
+            </a>
+            <p style="color: var(--text-light); font-size: 0.9rem; margin: 0;">
+                Code Repository: <a
+                    href="https://github.com/lokeshmohanty/lab-manager">https://github.com/lokeshmohanty/lab-manager</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

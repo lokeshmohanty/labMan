@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}{% if group %}Edit{% else %}Create{% endif %} Research Group - {{ lab_name }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <div class="card-header">{% if group %}Edit Research Group{% else %}Create New Research Group{% endif %}</div>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label for="name">Group Name</label>
+            <input type="text" id="name" name="name" class="form-control" required {% if group and group.name == 'Airex Lab' %}disabled{% endif %} value="{% if group %}{{ group.name }}{% endif %}"
+                   placeholder="Enter group name">
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" class="form-control" rows="4" placeholder="Enter group description">{% if group %}{{ group.description }}{% endif %}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="parent_id">Parent Group (Optional)</label>
+            <select id="parent_id" name="parent_id" class="form-control">
+                <option value="">None - Top Level Group</option>
+                {% for g in groups %}
+                <option value="{{ g.id }}" {% if group and group.parent_id == g.id %}selected{% endif %}>{{ g.name }}</option>
+                {% endfor %}
+            </select>
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                Select a parent group to create a hierarchical structure.
+            </small>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary">{% if group %}Update Group{% else %}Create Group{% endif %}</button>
+            <a href="{{ url_for('groups') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}{{ meeting.title }} - {{ lab_name }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="margin-bottom: 2rem;">
+        <a href="{{ url_for('meetings') }}" style="color: var(--primary); text-decoration: none;">
+            ← Back to Meetings
+        </a>
+    </div>
+    
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+        <div style="flex: 1;">
+            <h1 style="color: var(--primary); margin-bottom: 1rem;">{{ meeting.title }}</h1>
+        </div>
+        {% if can_edit %}
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="{{ url_for('edit_meeting', meeting_id=meeting.id) }}" class="btn btn-primary">Edit Meeting</a>
+            <form method="POST" action="{{ url_for('delete_meeting_route', meeting_id=meeting.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this meeting?');">
+                <button type="submit" class="btn btn-danger">Delete Meeting</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="grid grid-2" style="margin-bottom: 2rem;">
+        <div>
+            <p style="color: var(--text-light); margin-bottom: 0.5rem;"><strong>Date & Time:</strong></p>
+            <p>{{ meeting.meeting_time }}</p>
+        </div>
+        <div>
+            <p style="color: var(--text-light); margin-bottom: 0.5rem;"><strong>Organized By:</strong></p>
+            <p>{{ meeting.created_by_name }}</p>
+        </div>
+        <div>
+            <p style="color: var(--text-light); margin-bottom: 0.5rem;"><strong>Research Group:</strong></p>
+            <p>
+                {% if meeting.group_name %}
+                <span class="badge badge-user">{{ meeting.group_name }}</span>
+                {% else %}
+                All Lab Members
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    
+    {% if meeting.description %}
+    <div style="background-color: var(--bg-light); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+        <h3 style="color: var(--primary); margin-bottom: 1rem;">Description</h3>
+        <p style="white-space: pre-wrap;">{{ meeting.description }}</p>
+    </div>
+    {% endif %}
+    
+    <!-- RSVP Section -->
+    <div style="background-color: var(--bg-light); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+        <h3 style="color: var(--primary); margin-bottom: 1rem;">Will you attend?</h3>
+        <form method="POST" action="{{ url_for('respond_to_meeting', meeting_id=meeting.id) }}" style="display: flex; gap: 1rem;">
+            <button type="submit" name="response" value="join" class="btn btn-primary">I'll Join</button>
+            <button type="submit" name="response" value="wont_join" class="btn btn-secondary">Can't Join</button>
+        </form>
+    </div>
+    
+    <!-- Responses Section -->
+    {% if responses %}
+    <div style="margin-bottom: 2rem;">
+        <h3 style="color: var(--primary); margin-bottom: 1rem;">Responses</h3>
+        <div class="grid grid-2">
+            <div>
+                <h4 style="color: var(--success); margin-bottom: 0.5rem;">Joining ({{ responses|selectattr('response', 'equalto', 'join')|list|length }})</h4>
+                <ul style="list-style: none; padding: 0;">
+                    {% for r in responses %}
+                    {% if r.response == 'join' %}
+                    <li style="padding: 0.5rem; background-color: var(--bg-light); margin-bottom: 0.25rem; border-radius: 4px;">
+                        {{ r.user_name }}
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+            <div>
+                <h4 style="color: var(--error); margin-bottom: 0.5rem;">Can't Join ({{ responses|selectattr('response', 'equalto', 'wont_join')|list|length }})</h4>
+                <ul style="list-style: none; padding: 0;">
+                    {% for r in responses %}
+                    {% if r.response == 'wont_join' %}
+                    <li style="padding: 0.5rem; background-color: var(--bg-light); margin-bottom: 0.25rem; border-radius: 4px;">
+                        {{ r.user_name }}
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div style="margin-bottom: 1rem;">
+        <a href="{{ url_for('upload_content_route') }}?meeting_id={{ meeting.id }}" 
+           class="btn btn-primary">Upload Meeting Materials</a>
+    </div>
+</div>
+
+<div class="card">
+    <h2 style="color: var(--primary); margin-bottom: 1.5rem;">Meeting Materials</h2>
+    
+    {% if contents %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Filename</th>
+                <th>Uploaded By</th>
+                <th>Size</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for content in contents %}
+            <tr>
+                <td><strong>{{ content.title }}</strong></td>
+                <td>{{ content.filename }}</td>
+                <td>{{ content.uploaded_by_name }}</td>
+                <td>{{ "%.2f"|format(content.file_size / 1024 / 1024) }} MB</td>
+                <td>
+                    <a href="{{ url_for('download_content', content_id=content.id) }}" 
+                       class="btn btn-secondary" style="padding: 0.5rem 1rem;">Download</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: var(--text-light); padding: 2rem;">
+        No materials uploaded yet for this meeting.
+    </p>
+    {% endif %}
+</div>
+{% endblock %}

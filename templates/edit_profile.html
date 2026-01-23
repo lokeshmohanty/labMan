@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile - {{ lab_name }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <div class="card-header">Edit Profile</div>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name" class="form-control" required
+                   value="{{ user.name }}"
+                   placeholder="Enter full name">
+        </div>
+        
+        <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" class="form-control" required
+                   value="{{ user.email }}"
+                   placeholder="email@iisc.ac.in">
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                If you change your email, you'll need to verify it before the change takes effect.
+            </small>
+        </div>
+        
+        <div style="background-color: var(--bg-light); padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem;">
+            <p style="margin: 0; color: var(--text-dark);">
+                <strong>Note:</strong> To change your password, use the "Change Password" option from the Profile menu.
+            </p>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary">Update Profile</button>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

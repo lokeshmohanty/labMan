@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}{% if item %}Edit{% else %}Add{% endif %} Inventory Item - {{ lab_name }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <div class="card-header">
+        {% if item %}Edit Inventory Item{% else %}Add New Inventory Item{% endif %}
+    </div>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label for="name">Item Name</label>
+            <input type="text" id="name" name="name" class="form-control" required
+                   value="{% if item %}{{ item.name }}{% endif %}"
+                   placeholder="Enter item name">
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" class="form-control" rows="3"
+                      placeholder="Item description, specifications, etc.">{% if item %}{{ item.description }}{% endif %}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="quantity">Quantity</label>
+            <input type="number" id="quantity" name="quantity" class="form-control" required min="0"
+                   value="{% if item %}{{ item.quantity }}{% else %}0{% endif %}"
+                   placeholder="Enter quantity">
+        </div>
+        
+        <div class="form-group">
+            <label for="location">Location</label>
+            <input type="text" id="location" name="location" class="form-control"
+                   value="{% if item %}{{ item.location }}{% endif %}"
+                   placeholder="Room number, shelf, cabinet, etc.">
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                Where this item is stored in the lab.
+            </small>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary">
+                {% if item %}Update Item{% else %}Add Item{% endif %}
+            </button>
+            <a href="{{ url_for('inventory') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

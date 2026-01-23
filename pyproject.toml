@@ -1,0 +1,17 @@
+[project]
+name = "lab-manager"
+version = "1.0.0"
+description = "Lab Management System"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "dotenv>=0.9.9",
+    "flask>=3.1.2",
+    "werkzeug>=3.1.5",
+]
+
+[dependency-groups]
+dev = [
+    "gunicorn>=23.0.0",
+    "pytest>=9.0.2",
+]

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Research Groups - {{ lab_name }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 style="color: var(--primary);">Research Groups</h1>
+        {% if session.is_admin %}
+        <a href="{{ url_for('create_group_route') }}" class="btn btn-primary">Create New Group</a>
+        {% endif %}
+    </div>
+    
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Group Name</th>
+                <th>Description</th>
+                <th>Parent Group</th>
+                <th>Members</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for group in groups %}
+            <tr>
+                <td>
+                    <strong>{{ group.name }}</strong>
+                    {% if group.name == 'airex' %}
+                    <span class="badge" style="background-color: var(--primary); color: white; margin-left: 0.5rem;">Default</span>
+                    {% endif %}
+                </td>
+                <td>{{ group.description or '-' }}</td>
+                <td>{{ group.parent_name or '-' }}</td>
+                <td><strong>{{ group.member_count }}</strong></td>
+                <td>{{ group.created_at[:10] }}</td>
+                <td>
+                    <a href="{{ url_for('group_detail', group_id=group.id) }}" class="btn btn-secondary" 
+                       style="padding: 0.5rem 1rem;">View Details</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    {% if not groups %}
+    <p style="text-align: center; color: var(--text-light); padding: 2rem;">No groups found.</p>
+    {% endif %}
+</div>
+{% endblock %}

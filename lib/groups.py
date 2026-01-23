@@ -1,0 +1,161 @@
+from lib.data import get_db, query_db, execute_db
+
+def create_group(name, description, parent_id=None):
+    """Create a new research group"""
+    try:
+        execute_db(
+            'INSERT INTO research_groups (name, description, parent_id) VALUES (?, ?, ?)',
+            (name, description, parent_id)
+        )
+        return True
+    except Exception as e:
+        print(f"Error creating group: {e}")
+        return False
+
+def get_all_groups():
+    """Get all research groups"""
+    groups = query_db('''
+        SELECT g.*, pg.name as parent_name
+        FROM research_groups g
+        LEFT JOIN research_groups pg ON g.parent_id = pg.id
+        ORDER BY g.name
+    ''')
+    return [dict(group) for group in groups]
+
+def get_all_groups_with_counts():
+    """Get all research groups with member counts"""
+    groups = query_db('''
+        SELECT g.*, pg.name as parent_name,
+               COUNT(DISTINCT ug.user_id) as member_count
+        FROM research_groups g
+        LEFT JOIN research_groups pg ON g.parent_id = pg.id
+        LEFT JOIN user_groups ug ON g.id = ug.group_id
+        GROUP BY g.id
+        ORDER BY g.name
+    ''')
+    return [dict(group) for group in groups]
+
+def get_group_by_id(group_id):
+    """Get group by ID"""
+    group = query_db('''
+        SELECT g.*, pg.name as parent_name
+        FROM research_groups g
+        LEFT JOIN research_groups pg ON g.parent_id = pg.id
+        WHERE g.id = ?
+    ''', [group_id], one=True)
+    return dict(group) if group else None
+
+def get_group_by_name(name):
+    """Get group by name"""
+    group = query_db('SELECT * FROM research_groups WHERE name = ?', [name], one=True)
+    return dict(group) if group else None
+
+def update_group(group_id, name, description, parent_id=None):
+    """Update group information"""
+    try:
+        # Don't allow renaming Airex Lab group
+        group = get_group_by_id(group_id)
+        if group and group['name'] == 'Airex Lab' and name != 'Airex Lab':
+            print("Cannot rename default 'Airex Lab' group")
+            return False
+        
+        execute_db(
+            'UPDATE research_groups SET name = ?, description = ?, parent_id = ? WHERE id = ?',
+            (name, description, parent_id, group_id)
+        )
+        return True
+    except Exception as e:
+        print(f"Error updating group: {e}")
+        return False
+
+def delete_group(group_id):
+    """Delete a research group"""
+    try:
+        # Don't allow deleting the default 'airex' group
+        group = get_group_by_id(group_id)
+        if group and group['name'] == 'airex':
+            print("Cannot delete default 'airex' group")
+            return False
+        
+        execute_db('''
+                   DELETE FROM research_groups WHERE id = ?; 
+                   DELETE FROM user_groups WHERE group_id = ?
+                   ''', (group_id,group_id))
+        return True
+    except Exception as e:
+        print(f"Error deleting group: {e}")
+        return False
+
+def add_user_to_group(user_id, group_id):
+    """Add a user to a research group"""
+    try:
+        execute_db(
+            'INSERT OR IGNORE INTO user_groups (user_id, group_id) VALUES (?, ?)',
+            (user_id, group_id)
+        )
+        return True
+    except Exception as e:
+        print(f"Error adding user to group: {e}")
+        return False
+
+def remove_user_from_group(user_id, group_id):
+    """Remove a user from a research group"""
+    try:
+        # Don't allow removing from default 'airex' group
+        group = get_group_by_id(group_id)
+        if group and group['name'] == 'airex':
+            print("Cannot remove user from default 'airex' group")
+            return False
+        
+        execute_db(
+            'DELETE FROM user_groups WHERE user_id = ? AND group_id = ?',
+            (user_id, group_id)
+        )
+        return True
+    except Exception as e:
+        print(f"Error removing user from group: {e}")
+        return False
+
+def get_user_groups(user_id):
+    """Get all groups a user belongs to"""
+    groups = query_db('''
+        SELECT g.*, ug.joined_at
+        FROM research_groups g
+        INNER JOIN user_groups ug ON g.id = ug.group_id
+        WHERE ug.user_id = ?
+        ORDER BY g.name
+    ''', [user_id])
+    return [dict(group) for group in groups]
+
+def get_group_members(group_id):
+    """Get all members of a research group"""
+    members = query_db('''
+        SELECT u.id, u.name, u.email, u.is_admin, ug.joined_at
+        FROM users u
+        INNER JOIN user_groups ug ON u.id = ug.user_id
+        WHERE ug.group_id = ?
+        ORDER BY u.name
+    ''', [group_id])
+    return [dict(member) for member in members]
+
+def get_subgroups(parent_id):
+    """Get all subgroups of a parent group"""
+    subgroups = query_db(
+        'SELECT * FROM research_groups WHERE parent_id = ? ORDER BY name',
+        [parent_id]
+    )
+    return [dict(group) for group in subgroups]
+
+def get_group_hierarchy(group_id):
+    """Get the full hierarchy path for a group"""
+    hierarchy = []
+    current_group = get_group_by_id(group_id)
+    
+    while current_group:
+        hierarchy.insert(0, current_group)
+        if current_group['parent_id']:
+            current_group = get_group_by_id(current_group['parent_id'])
+        else:
+            break
+    
+    return hierarchy

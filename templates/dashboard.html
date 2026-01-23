@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - {{ lab_name }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1 style="color: var(--primary); margin-bottom: 0.5rem;">Welcome, {{ user.name }}!</h1>
+    <p style="color: var(--text-light);">{{ user.email }} 
+        {% if user.is_admin %}
+        <span class="badge badge-admin">Admin</span>
+        {% else %}
+        <span class="badge badge-user">User</span>
+        {% endif %}
+    </p>
+</div>
+
+<div class="grid grid-3">
+    <div class="card">
+        <h3 style="color: var(--primary); margin-bottom: 1rem;">Quick Actions</h3>
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <a href="{{ url_for('create_meeting_route') }}" class="btn btn-primary">Schedule Meeting</a>
+            <a href="{{ url_for('upload_content_route') }}" class="btn btn-secondary">Upload Content</a>
+            {% if user.is_admin %}
+            <a href="{{ url_for('create_user_route') }}" class="btn btn-secondary">Add Member</a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: var(--primary); margin-bottom: 1rem;">My Groups</h3>
+        {% if groups %}
+        <ul style="list-style: none;">
+            {% for group in groups %}
+            <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border);">
+                <a href="{{ url_for('group_detail', group_id=group.id) }}" 
+                   style="color: var(--text-dark); text-decoration: none;">
+                    {{ group.name }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p style="color: var(--text-light);">You are not part of any groups yet.</p>
+        {% endif %}
+    </div>
+    
+    <div class="card">
+        <h3 style="color: var(--primary); margin-bottom: 1rem;">Recent Meetings</h3>
+        {% if meetings %}
+        <ul style="list-style: none;">
+            {% for meeting in meetings %}
+            <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border);">
+                <a href="{{ url_for('meeting_detail', meeting_id=meeting.id) }}" 
+                   style="color: var(--text-dark); text-decoration: none;">
+                    <strong>{{ meeting.title }}</strong><br>
+                    <small style="color: var(--text-light);">
+                        {{ meeting.meeting_time }}
+                    </small>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p style="color: var(--text-light);">No recent meetings.</p>
+        {% endif %}
+        <a href="{{ url_for('meetings') }}" style="margin-top: 1rem; display: inline-block; color: var(--primary);">
+            View all meetings →
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <h2 style="color: var(--primary); margin-bottom: 1rem;">System Overview</h2>
+    <div class="grid grid-3">
+        <div style="text-align: center; padding: 1rem; background-color: var(--bg-light); border-radius: 8px;">
+            <div style="font-size: 2rem; color: var(--primary); font-weight: bold;">
+                {{ groups|length }}
+            </div>
+            <div style="color: var(--text-light);">Research Groups</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background-color: var(--bg-light); border-radius: 8px;">
+            <div style="font-size: 2rem; color: var(--primary); font-weight: bold;">
+                {{ meetings|length }}
+            </div>
+            <div style="color: var(--text-light);">Recent Meetings</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background-color: var(--bg-light); border-radius: 8px;">
+            <div style="font-size: 2rem; color: var(--primary); font-weight: bold;">
+                <a href="{{ url_for('content') }}" style="color: var(--primary); text-decoration: none;">View</a>
+            </div>
+            <div style="color: var(--text-light);">My Content</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

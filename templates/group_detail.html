@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Group Details - {{ lab_name }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="margin-bottom: 2rem;">
+        <a href="{{ url_for('groups') }}" style="color: var(--primary); text-decoration: none;">
+            ← Back to Groups
+        </a>
+    </div>
+    
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+        <div>
+            <h1 style="color: var(--primary); margin-bottom: 0.5rem;">{{ group.name }}</h1>
+            <p style="color: var(--text-light); font-size: 1.1rem;">{{ group.description or 'No description provided' }}</p>
+        </div>
+        {% if session.is_admin and group.name != 'Airex Lab' %}
+        <a href="{{ url_for('edit_group', group_id=group.id) }}" class="btn btn-primary">Edit Group</a>
+        {% endif %}
+    </div>
+    
+    {% if session.is_admin %}
+    <div class="card" style="background-color: var(--bg-light); padding: 1.5rem; margin-bottom: 2rem;">
+        <h3 style="color: var(--primary); margin-bottom: 1rem;">Add Member to Group</h3>
+        <form method="POST" action="{{ url_for('add_member', group_id=group.id) }}">
+            <div style="display: flex; gap: 1rem; align-items: flex-end;">
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                    <label for="user_id">Select Member</label>
+                    <select id="user_id" name="user_id" class="form-control" required>
+                        <option value="">Choose a member...</option>
+                        {% for user in all_users %}
+                        <option value="{{ user.id }}">{{ user.name }} ({{ user.email }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Member</button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+    
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Joined Group</th>
+                {% if session.is_admin %}
+                <th>Actions</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in members %}
+            <tr>
+                <td><strong>{{ member.name }}</strong></td>
+                <td>{{ member.email }}</td>
+                <td>
+                    {% if member.is_admin %}
+                    <span class="badge badge-admin">Admin</span>
+                    {% else %}
+                    <span class="badge badge-user">User</span>
+                    {% endif %}
+                </td>
+                <td>{{ member.joined_at[:10] }}</td>
+                {% if session.is_admin %}
+                <td>
+                    <form method="POST" action="{{ url_for('remove_member', group_id=group.id, user_id=member.id) }}" 
+                          style="display: inline;"
+                          onsubmit="return confirm('Remove this member from the group?');">
+                        <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem;">Remove</button>
+                    </form>
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    {% if not members %}
+    <p style="text-align: center; color: var(--text-light); padding: 2rem;">No members in this group yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

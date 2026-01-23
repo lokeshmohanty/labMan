@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Lab Inventory - {{ lab_name }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1 style="color: var(--primary); margin-bottom: 2rem;">Lab Inventory</h1>
+
+    <!-- Equipment Section -->
+    <div style="margin-bottom: 3rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="color: var(--primary);">Equipment</h2>
+            {% if session.is_admin %}
+            <a href="{{ url_for('add_inventory') }}" class="btn btn-primary">Add Equipment</a>
+            {% endif %}
+        </div>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Description</th>
+                    <th>Quantity</th>
+                    <th>Location</th>
+                    <th>Last Updated</th>
+                    {% if session.is_admin %}
+                    <th>Actions</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in inventory %}
+                <tr>
+                    <td><strong>{{ item.name }}</strong></td>
+                    <td>{{ item.description or '-' }}</td>
+                    <td>
+                        <span
+                            style="font-size: 1.2rem; font-weight: bold; 
+                                     color: {% if item.quantity < 5 %}var(--error){% elif item.quantity < 10 %}var(--warning){% else %}var(--success){% endif %};">
+                            {{ item.quantity }}
+                        </span>
+                    </td>
+                    <td>{{ item.location or '-' }}</td>
+                    <td>{{ item.updated_at[:10] }}</td>
+                    {% if session.is_admin %}
+                    <td>
+                        <a href="{{ url_for('edit_inventory', item_id=item.id) }}" class="btn btn-secondary"
+                            style="padding: 0.5rem 1rem; margin-right: 0.5rem;">Edit</a>
+                        <form method="POST" action="{{ url_for('delete_inventory_route', item_id=item.id) }}"
+                            style="display: inline;"
+                            onsubmit="return confirm('Are you sure you want to delete this item?');">
+                            <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem;">Delete</button>
+                        </form>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if not inventory %}
+        <p style="text-align: center; color: var(--text-light); padding: 2rem;">No equipment items found.</p>
+        {% endif %}
+    </div>
+
+    <!-- Servers Section -->
+    <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="color: var(--primary);">Lab Servers</h2>
+            {% if session.is_admin %}
+            <a href="{{ url_for('add_server_route') }}" class="btn btn-primary">Add Server</a>
+            {% endif %}
+        </div>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Hostname</th>
+                    <th>IP Address</th>
+                    <th>Administrator</th>
+                    <th>Location</th>
+                    <th>Description</th>
+                    {% if session.is_admin %}
+                    <th>Actions</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for server in servers %}
+                <tr>
+                    <td><strong>{{ server.hostname }}</strong></td>
+                    <td><code
+                            style="background-color: var(--bg-light); padding: 0.25rem 0.5rem; border-radius: 4px;">{{ server.ip_address }}</code>
+                    </td>
+                    <td>{{ server.admin_name or '-' }}</td>
+                    <td>{{ server.location or '-' }}</td>
+                    <td>{{ server.description or '-' }}</td>
+                    {% if session.is_admin %}
+                    <td>
+                        <a href="{{ url_for('edit_server', server_id=server.id) }}" class="btn btn-secondary"
+                            style="padding: 0.5rem 1rem; margin-right: 0.5rem;">Edit</a>
+                        <form method="POST" action="{{ url_for('delete_server_route', server_id=server.id) }}"
+                            style="display: inline;"
+                            onsubmit="return confirm('Are you sure you want to delete this server?');">
+                            <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem;">Delete</button>
+                        </form>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if not servers %}
+        <p style="text-align: center; color: var(--text-light); padding: 2rem;">No servers registered.</p>
+        {% endif %}
+    </div>
+</div>
+
+
+{% endblock %}

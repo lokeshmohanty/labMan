@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Schedule Meeting - {{ lab_name }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <div class="card-header">{% if is_edit %}Edit Meeting{% else %}Schedule New Meeting{% endif %}</div>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label for="title">Meeting Title</label>
+            <input type="text" id="title" name="title" class="form-control" required value="{% if meeting %}{{ meeting.title }}{% endif %}"
+                   placeholder="Enter meeting title">
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" class="form-control" rows="4" placeholder="Meeting agenda and details">{% if meeting %}{{ meeting.description }}{% endif %}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="meeting_time">Date & Time</label>
+            <input type="datetime-local" id="meeting_time" name="meeting_time" class="form-control" required value="{% if meeting %}{{ meeting.meeting_time[:16] }}{% endif %}">
+        </div>
+        
+        <div class="form-group">
+            <label for="group_id">Research Group (Optional)</label>
+            <select id="group_id" name="group_id" class="form-control">
+                <option value="">All Lab Members</option>
+                {% for group in groups %}
+                <option value="{{ group.id }}" {% if meeting and meeting.group_id == group.id %}selected{% endif %}>{{ group.name }}</option>
+                {% endfor %}
+            </select>
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                Select a specific group or leave blank for all lab members.
+            </small>
+        </div>
+        
+        <div class="form-group">
+            <label>Meeting Tags</label>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="tag1" name="tags" value="Knowledge Session" {% if meeting and 'Knowledge Session' in meeting.tags_list %}checked{% endif %}>
+                    <label for="tag1" style="margin-bottom: 0;">Knowledge Session</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="tag2" name="tags" value="Research Discussion" {% if meeting and 'Research Discussion' in meeting.tags_list %}checked{% endif %}>
+                    <label for="tag2" style="margin-bottom: 0;">Research Discussion</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="tag3" name="tags" value="Progress Update" {% if meeting and 'Progress Update' in meeting.tags_list %}checked{% endif %}>
+                    <label for="tag3" style="margin-bottom: 0;">Progress Update</label>
+                </div>
+            </div>
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                Select one or more tags to categorize this meeting.
+            </small>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary">{% if is_edit %}Update Meeting{% else %}Schedule Meeting{% endif %}</button>
+            <a href="{{ url_for('meetings') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

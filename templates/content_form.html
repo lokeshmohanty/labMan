@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Content - {{ lab_name }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <div class="card-header">{% if is_edit %}Edit Content{% else %}Upload New Content{% endif %}</div>
+    
+    <form method="POST" {% if not is_edit %}enctype="multipart/form-data"{% endif %}>
+        <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" id="title" name="title" class="form-control" required value="{% if content %}{{ content.title }}{% endif %}"
+                   placeholder="Enter content title">
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" class="form-control" rows="3" placeholder="Brief description of the content">{% if content %}{{ content.description }}{% endif %}</textarea>
+        </div>
+        
+        {% if not is_edit %}
+        <div class="form-group">
+            <label for="file">File</label>
+            <input type="file" id="file" name="file" class="form-control" required>
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                Max size: 100MB. Allowed: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, images, ZIP, CSV, Python, Jupyter notebooks, Markdown
+            </small>
+        </div>
+        {% else %}
+        <div style="background-color: var(--bg-light); padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+            <p style="margin: 0;"><strong>Current file:</strong> {{ content.filename }}</p>
+            <p style="margin: 0.5rem 0 0 0; color: var(--text-light); font-size: 0.9rem;">Note: File cannot be changed. Upload new content to replace.</p>
+        </div>
+        {% endif %}
+        
+        <div class="form-group">
+            <label for="group_id">Research Group (Optional)</label>
+            <select id="group_id" name="group_id" class="form-control">
+                <option value="">No specific group</option>
+                {% for group in groups %}
+                <option value="{{ group.id }}" {% if content and content.group_id == group.id %}selected{% endif %}>{{ group.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="meeting_id">Associated Meeting (Optional)</label>
+            <select id="meeting_id" name="meeting_id" class="form-control">
+                <option value="">No specific meeting</option>
+                {% for meeting in meetings %}
+                <option value="{{ meeting.id }}" {% if content and content.meeting_id == meeting.id %}selected{% endif %}>{{ meeting.title }} - {{ meeting.meeting_time[:10] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="access_level">Access Level</label>
+            <select id="access_level" name="access_level" class="form-control" required>
+                <option value="group" {% if content and content.access_level == 'group' %}selected{% endif %}>Group Members Only</option>
+                <option value="link" {% if content and content.access_level == 'link' %}selected{% endif %}>Anyone with Link</option>
+            </select>
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                "Anyone with Link" allows sharing with non-registered users via a unique URL.
+            </small>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary">{% if is_edit %}Update Content{% else %}Upload Content{% endif %}</button>
+            <a href="{{ url_for('content') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
