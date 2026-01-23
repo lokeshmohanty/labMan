@@ -226,3 +226,7 @@ For production: **Use WSGI server** (Gunicorn):
    ```bash
    uv rungunicorn -w 4 -b localhost:9000 app:app
    ```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
