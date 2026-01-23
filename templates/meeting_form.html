@@ -5,60 +5,174 @@
 {% block content %}
 <div class="card" style="max-width: 600px; margin: 0 auto;">
     <div class="card-header">{% if is_edit %}Edit Meeting{% else %}Schedule New Meeting{% endif %}</div>
-    
+
     <form method="POST">
         <div class="form-group">
             <label for="title">Meeting Title</label>
-            <input type="text" id="title" name="title" class="form-control" required value="{% if meeting %}{{ meeting.title }}{% endif %}"
-                   placeholder="Enter meeting title">
+            <input type="text" id="title" name="title" class="form-control" required
+                value="{% if meeting %}{{ meeting.title }}{% endif %}" placeholder="Enter meeting title">
         </div>
-        
+
         <div class="form-group">
             <label for="description">Description</label>
-            <textarea id="description" name="description" class="form-control" rows="4" placeholder="Meeting agenda and details">{% if meeting %}{{ meeting.description }}{% endif %}</textarea>
+            <textarea id="description" name="description" class="form-control" rows="4"
+                placeholder="Meeting agenda and details">{% if meeting %}{{ meeting.description }}{% endif %}</textarea>
         </div>
-        
+
         <div class="form-group">
             <label for="meeting_time">Date & Time</label>
-            <input type="datetime-local" id="meeting_time" name="meeting_time" class="form-control" required value="{% if meeting %}{{ meeting.meeting_time[:16] }}{% endif %}">
+            <input type="datetime-local" id="meeting_time" name="meeting_time" class="form-control" required
+                value="{% if meeting %}{{ meeting.meeting_time[:16] }}{% else %}{{ default_time }}{% endif %}">
         </div>
-        
+
         <div class="form-group">
             <label for="group_id">Research Group (Optional)</label>
             <select id="group_id" name="group_id" class="form-control">
                 <option value="">All Lab Members</option>
                 {% for group in groups %}
-                <option value="{{ group.id }}" {% if meeting and meeting.group_id == group.id %}selected{% endif %}>{{ group.name }}</option>
+                <option value="{{ group.id }}" {% if meeting and meeting.group_id==group.id %}selected{% endif %}>{{
+                    group.name }}</option>
                 {% endfor %}
             </select>
             <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
                 Select a specific group or leave blank for all lab members.
             </small>
         </div>
-        
+
         <div class="form-group">
             <label>Meeting Tags</label>
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <div class="checkbox-group">
-                    <input type="checkbox" id="tag1" name="tags" value="Knowledge Session" {% if meeting and 'Knowledge Session' in meeting.tags_list %}checked{% endif %}>
-                    <label for="tag1" style="margin-bottom: 0;">Knowledge Session</label>
-                </div>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="tag2" name="tags" value="Research Discussion" {% if meeting and 'Research Discussion' in meeting.tags_list %}checked{% endif %}>
-                    <label for="tag2" style="margin-bottom: 0;">Research Discussion</label>
-                </div>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="tag3" name="tags" value="Progress Update" {% if meeting and 'Progress Update' in meeting.tags_list %}checked{% endif %}>
-                    <label for="tag3" style="margin-bottom: 0;">Progress Update</label>
+
+            <div id="all-tags-container" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+                {% for tag in available_tags %}
+                <button type="button" class="btn btn-outline tag-item" onclick="toggleTag('{{ tag }}')"
+                    data-tag="{{ tag }}"
+                    style="border: 1px solid var(--border); background-color: white; color: var(--text-dark); transition: all 0.2s;">
+                    {{ tag }}
+                </button>
+                {% endfor %}
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button type="button" class="btn btn-secondary" onclick="showNewTagInput()" id="show-add-btn"
+                    style="font-size: 0.9rem; padding: 0.4rem 0.8rem;">+ Create New Tag</button>
+                <div id="new-tag-input-group" style="display: none; align-items: center; gap: 0.5rem;">
+                    <input type="text" id="new-tag-name" class="form-control" style="width: 200px;"
+                        placeholder="New tag name">
+                    <button type="button" class="btn btn-primary" onclick="createNewTag()"
+                        style="padding: 0.4rem 0.8rem;">Add</button>
+                    <button type="button" class="btn btn-danger" onclick="hideNewTagInput()"
+                        style="padding: 0.4rem 0.8rem;">Cancel</button>
                 </div>
             </div>
+
+            <input type="hidden" name="tags" id="tags-hidden"
+                value="{% if meeting and meeting.tags %}{{ meeting.tags }}{% endif %}">
+
             <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
-                Select one or more tags to categorize this meeting.
+                Click tags to select/deselect them. Use "Create New Tag" to add custom tags.
             </small>
         </div>
-        
+
+        <script>
+            let selectedTags = [];
+
+            function initTags() {
+                const hiddenInput = document.getElementById('tags-hidden');
+                if (hiddenInput.value) {
+                    selectedTags = hiddenInput.value.split(',').filter(t => t.trim());
+                }
+                updateVisualState();
+
+                // Add enter key listener for new tag input
+                document.getElementById('new-tag-name').addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        createNewTag();
+                    }
+                });
+            }
+
+            function toggleTag(tag) {
+                if (selectedTags.includes(tag)) {
+                    selectedTags = selectedTags.filter(t => t !== tag);
+                } else {
+                    selectedTags.push(tag);
+                }
+                updateHiddenInput();
+                updateVisualState();
+            }
+
+            function showNewTagInput() {
+                document.getElementById('show-add-btn').style.display = 'none';
+                document.getElementById('new-tag-input-group').style.display = 'flex';
+                document.getElementById('new-tag-name').focus();
+            }
+
+            function hideNewTagInput() {
+                document.getElementById('show-add-btn').style.display = 'block';
+                document.getElementById('new-tag-input-group').style.display = 'none';
+                document.getElementById('new-tag-name').value = '';
+            }
+
+            function createNewTag() {
+                const input = document.getElementById('new-tag-name');
+                const tagName = input.value.trim();
+
+                if (!tagName) return;
+
+                // Check if already exists in available tags to avoid duplicates
+                const existingBtn = Array.from(document.querySelectorAll('.tag-item')).find(btn => btn.dataset.tag.toLowerCase() === tagName.toLowerCase());
+
+                if (existingBtn) {
+                    if (!selectedTags.includes(existingBtn.dataset.tag)) {
+                        toggleTag(existingBtn.dataset.tag);
+                    }
+                } else {
+                    // Create visual button
+                    const container = document.getElementById('all-tags-container');
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'btn btn-outline tag-item';
+                    btn.onclick = function () { toggleTag(tagName) };
+                    btn.dataset.tag = tagName;
+                    btn.style.cssText = 'border: 1px solid var(--border); background-color: white; color: var(--text-dark); transition: all 0.2s;';
+                    btn.textContent = tagName;
+                    container.appendChild(btn);
+
+                    // Auto select
+                    toggleTag(tagName);
+                }
+
+                hideNewTagInput();
+            }
+
+            function updateHiddenInput() {
+                document.getElementById('tags-hidden').value = selectedTags.join(',');
+            }
+
+            function updateVisualState() {
+                const buttons = document.querySelectorAll('.tag-item');
+                buttons.forEach(btn => {
+                    const tag = btn.dataset.tag;
+                    if (selectedTags.includes(tag)) {
+                        btn.style.backgroundColor = 'var(--primary)';
+                        btn.style.color = 'white';
+                        btn.style.borderColor = 'var(--primary)';
+                    } else {
+                        btn.style.backgroundColor = 'white';
+                        btn.style.color = 'var(--text-dark)';
+                        btn.style.borderColor = 'var(--border)';
+                    }
+                });
+            }
+
+            // Initialize on load
+            document.addEventListener('DOMContentLoaded', initTags);
+        </script>
+
         <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-            <button type="submit" class="btn btn-primary">{% if is_edit %}Update Meeting{% else %}Schedule Meeting{% endif %}</button>
+            <button type="submit" class="btn btn-primary">{% if is_edit %}Update Meeting{% else %}Schedule Meeting{%
+                endif %}</button>
             <a href="{{ url_for('meetings') }}" class="btn btn-secondary">Cancel</a>
         </div>
     </form>

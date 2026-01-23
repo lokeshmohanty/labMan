@@ -48,6 +48,7 @@ SMTP_PORT=587
 SMTP_USERNAME=your-email
 SMTP_PASSWORD=your-password
 SENDER_EMAIL=sender@domain.com
+DEFAULT_MEETING_TAGS=Research Discussion,Progress Update
 ```
 
 4. Run application

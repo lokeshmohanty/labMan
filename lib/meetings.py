@@ -74,15 +74,19 @@ def get_meetings_by_tags(tags):
     if not tags:
         return get_all_meetings()
     
-    tag_conditions = ' OR '.join(['m.tags LIKE ?' for _ in tags])
-    tag_params = [f'%{tag}%' for tag in tags]
+    # Use exact matching strategy for comma-separated values
+    # We pad the stored tags with commas: ',tag1,tag2,' and search for ',tag,'
+    tag_conditions = ' OR '.join(["',' || tags || ',' LIKE ?" for _ in tags])
+    
+    # Pad the search terms with commas
+    tag_params = [f'%,{tag.strip()},%' for tag in tags]
     
     meetings = query_db(f'''
         SELECT m.*, u.name as created_by_name, g.name as group_name
         FROM meetings m
         LEFT JOIN users u ON m.created_by = u.id
         LEFT JOIN research_groups g ON m.group_id = g.id
-        WHERE {tag_conditions}
+        WHERE ({tag_conditions})
         ORDER BY m.meeting_time DESC
     ''', tag_params)
     return [dict(meeting) for meeting in meetings]
@@ -134,6 +138,18 @@ def update_meeting(meeting_id, title, description, meeting_time, group_id=None, 
     except Exception as e:
         print(f"Error updating meeting: {e}")
         return False
+
+def get_all_tags():
+    """Get all unique tags used in meetings"""
+    tags_data = query_db('SELECT tags FROM meetings WHERE tags IS NOT NULL AND tags != ""')
+    unique_tags = set()
+    
+    for row in tags_data:
+        if row['tags']:
+            for tag in row['tags'].split(','):
+                unique_tags.add(tag.strip())
+                
+    return sorted(list(unique_tags))
 
 def format_meeting_datetime(dt_str):
     """Format datetime string to '22 Jan, 2026 (Thu) @ 10:00 AM'"""

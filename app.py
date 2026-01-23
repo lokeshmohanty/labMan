@@ -6,7 +6,7 @@ from lib.auth import login_user, logout_user, require_login, require_admin, get_
 from lib.users import create_user, get_all_users, update_user, delete_user, get_user_by_id, update_user_password, create_password_reset_token, verify_reset_token, update_user_notifications, send_activation_email
 from lib.users import update_user_profile, verify_email_change
 from lib.groups import create_group, get_all_groups, get_all_groups_with_counts, add_user_to_group, remove_user_from_group, get_user_groups, get_group_members, get_group_by_id, update_group
-from lib.meetings import create_meeting, get_all_meetings, update_meeting, delete_meeting, get_meeting_by_id, get_meetings_this_week, get_meetings_by_month, record_meeting_response, get_meeting_responses, get_meetings_by_tags, format_meeting_datetime
+from lib.meetings import create_meeting, get_all_meetings, update_meeting, delete_meeting, get_meeting_by_id, get_meetings_this_week, get_meetings_by_month, record_meeting_response, get_meeting_responses, get_meetings_by_tags, format_meeting_datetime, get_all_tags
 from lib.content import upload_content, get_content, delete_content, get_content_by_id, check_content_access, get_content_by_share_link, get_content_by_group, update_content
 from lib.inventory import add_inventory_item, get_all_inventory, update_inventory_item, delete_inventory_item
 from lib.servers import add_server, get_all_servers, update_server, delete_server, get_server_by_id
@@ -383,7 +383,12 @@ def meetings():
     for meeting in this_week:
         meeting['meeting_time'] = format_meeting_datetime(meeting['meeting_time'])
     
-    return render_template('meetings.html', meetings=all_meetings, this_week=this_week)
+    # Get available tags for filter
+    default_tags = [t.strip() for t in os.getenv('DEFAULT_MEETING_TAGS', '').split(',') if t.strip()]
+    db_tags = get_all_tags()
+    available_tags = sorted(list(set(default_tags + db_tags)))
+    
+    return render_template('meetings.html', meetings=all_meetings, this_week=this_week, available_tags=available_tags)
 
 @app.route('/meetings/calendar/<int:year>/<int:month>')
 @require_login
@@ -399,7 +404,8 @@ def create_meeting_route():
         description = request.form.get('description')
         meeting_time = request.form.get('meeting_time')
         group_id = request.form.get('group_id')
-        tags = request.form.getlist('tags')
+        tags_str = request.form.get('tags', '')
+        tags = [t.strip() for t in tags_str.split(',') if t.strip()]
         
         user = get_current_user()
         if create_meeting(title, description, meeting_time, user['id'], group_id, tags):
@@ -410,7 +416,16 @@ def create_meeting_route():
     
     user = get_current_user()
     user_groups = get_user_groups(user['id'])
-    return render_template('meeting_form.html', groups=user_groups)
+    
+    # Get available tags
+    default_tags = [t.strip() for t in os.getenv('DEFAULT_MEETING_TAGS', '').split(',') if t.strip()]
+    db_tags = get_all_tags()
+    available_tags = sorted(list(set(default_tags + db_tags)))
+    
+    # Set default time to now
+    default_time = datetime.now().strftime('%Y-%m-%dT%H:%M')
+    
+    return render_template('meeting_form.html', groups=user_groups, available_tags=available_tags, default_time=default_time)
 
 @app.route('/meetings/<int:meeting_id>/edit', methods=['GET', 'POST'])
 @require_login
@@ -431,7 +446,8 @@ def edit_meeting(meeting_id):
         description = request.form.get('description')
         new_time = request.form.get('meeting_time')
         group_id = request.form.get('group_id')
-        tags = request.form.getlist('tags')
+        tags_str = request.form.get('tags', '')
+        tags = [t.strip() for t in tags_str.split(',') if t.strip()]
         
         # Check if time changed
         old_time = meeting['meeting_time']
@@ -446,7 +462,13 @@ def edit_meeting(meeting_id):
     user_groups = get_user_groups(user['id'])
     # Parse existing tags
     meeting['tags_list'] = meeting['tags'].split(',') if meeting.get('tags') else []
-    return render_template('meeting_form.html', meeting=meeting, groups=user_groups, is_edit=True)
+    
+    # Get available tags
+    default_tags = [t.strip() for t in os.getenv('DEFAULT_MEETING_TAGS', '').split(',') if t.strip()]
+    db_tags = get_all_tags()
+    available_tags = sorted(list(set(default_tags + db_tags)))
+    
+    return render_template('meeting_form.html', meeting=meeting, groups=user_groups, is_edit=True, available_tags=available_tags)
 
 @app.route('/meetings/<int:meeting_id>/delete', methods=['POST'])
 @require_login
