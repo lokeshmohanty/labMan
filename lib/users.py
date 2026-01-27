@@ -291,7 +291,7 @@ Best regards,
 
 def get_all_users():
     """Get all users"""
-    users = query_db('SELECT id, name, email, is_admin, email_notifications, created_at FROM users ORDER BY name')
+    users = query_db('SELECT id, name, email, is_admin, email_notifications, created_at, password_hash FROM users ORDER BY name')
     return [dict(user) for user in users]
 
 def get_user_by_id(user_id):
@@ -449,6 +449,36 @@ def verify_reset_token(token):
     except Exception as e:
         print(f"Error verifying token: {e}")
         return None
+
+def get_latest_activation_token(user_id):
+    """Get the latest unused activation token for a user"""
+    try:
+        token = query_db(
+            '''SELECT * FROM password_reset_tokens 
+               WHERE user_id = ? AND used = 0 
+               ORDER BY created_at DESC LIMIT 1''',
+            [user_id], one=True
+        )
+        return dict(token) if token else None
+    except Exception as e:
+        print(f"Error getting latest token: {e}")
+        return None
+
+def resend_activation_email(user_id):
+    """Resend activation email to a user"""
+    try:
+        user = get_user_by_id(user_id)
+        if not user:
+            return False
+            
+        # Delete existing unused tokens
+        execute_db('DELETE FROM password_reset_tokens WHERE user_id = ? AND used = 0', (user_id,))
+        
+        # Send new activation email
+        return send_activation_email(user['email'], user['name'], user_id)
+    except Exception as e:
+        print(f"Error resending activation email: {e}")
+        return False
 
 def send_password_reset_email(email, name, reset_link):
     """Send password reset email to user"""

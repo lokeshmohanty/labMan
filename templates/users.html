@@ -10,7 +10,7 @@
         <a href="{{ url_for('create_user_route') }}" class="btn btn-primary">Add New Member</a>
         {% endif %}
     </div>
-    
+
     <table class="table">
         <thead>
             <tr>
@@ -29,7 +29,14 @@
                 <td><strong>{{ user.name }}</strong></td>
                 <td>{{ user.email }}</td>
                 <td>
-                    {% if user.is_admin %}
+                    {% if user.status == 'pending' %}
+                    <span class="badge" style="background-color: #ff9800; color: white; cursor: pointer;"
+                        data-user-id="{{ user.id }}" data-user-email="{{ user.email }}"
+                        data-sent-at="{{ user.token_info.created_at if user.token_info else 'Unknown' }}"
+                        onclick="openPendingModal(this.getAttribute('data-user-id'), this.getAttribute('data-user-email'), this.getAttribute('data-sent-at'))">
+                        Pending
+                    </span>
+                    {% elif user.is_admin %}
                     <span class="badge badge-admin">Admin</span>
                     {% else %}
                     <span class="badge badge-user">User</span>
@@ -38,14 +45,14 @@
                 <td>{{ user.created_at[:10] }}</td>
                 {% if session.is_admin %}
                 <td>
-                    <a href="{{ url_for('edit_user', user_id=user.id) }}" class="btn btn-secondary" 
-                       style="padding: 0.5rem 1rem; margin-right: 0.5rem;">Edit</a>
-                    <a href="{{ url_for('admin_reset_password', user_id=user.id) }}" class="btn btn-primary" 
-                       style="padding: 0.5rem 1rem; margin-right: 0.5rem;">Reset Password</a>
+                    <a href="{{ url_for('edit_user', user_id=user.id) }}" class="btn btn-secondary"
+                        style="padding: 0.5rem 1rem; margin-right: 0.5rem;">Edit</a>
+                    <a href="{{ url_for('admin_reset_password', user_id=user.id) }}" class="btn btn-primary"
+                        style="padding: 0.5rem 1rem; margin-right: 0.5rem;">Reset Password</a>
                     {% if user.id != session.user_id %}
-                    <form method="POST" action="{{ url_for('delete_user_route', user_id=user.id) }}" 
-                          style="display: inline;"
-                          onsubmit="return confirm('Are you sure you want to delete this user?');">
+                    <form method="POST" action="{{ url_for('delete_user_route', user_id=user.id) }}"
+                        style="display: inline;"
+                        onsubmit="return confirm('Are you sure you want to delete this user?');">
                         <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem;">Delete</button>
                     </form>
                     {% endif %}
@@ -55,9 +62,81 @@
             {% endfor %}
         </tbody>
     </table>
-    
+
     {% if not users %}
     <p style="text-align: center; color: var(--text-light); padding: 2rem;">No members found.</p>
     {% endif %}
 </div>
+
+<!-- Pending User Modal -->
+<div id="pendingModal" class="modal"
+    style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+    <div class="modal-content"
+        style="background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 8px; position: relative;">
+        <span class="close" onclick="closePendingModal()"
+            style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+        <h2 style="margin-top: 0; color: var(--primary);">Invitation Details</h2>
+        <div style="margin: 20px 0;">
+            <p><strong>Email:</strong> <span id="modalEmail"></span></p>
+            <p><strong>Sent At:</strong> <span id="modalSentAt"></span></p>
+            <p><strong>Status:</strong> <span id="modalStatus" style="color: green;">Valid</span></p>
+        </div>
+
+        <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+            <form id="resendForm" method="POST" action="">
+                <button type="submit" class="btn btn-primary">Resend Invitation</button>
+            </form>
+            <form id="deleteForm" method="POST" action=""
+                onsubmit="return confirm('Are you sure you want to delete this pending user?');">
+                <button type="submit" class="btn btn-danger">Delete User</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openPendingModal(userId, email, sentAt) {
+        const modal = document.getElementById('pendingModal');
+        document.getElementById('modalEmail').textContent = email;
+
+        // Format date
+        let formattedDate = 'Unknown';
+        if (sentAt && sentAt !== 'Unknown') {
+            const date = new Date(sentAt + 'Z'); // Assume UTC from server
+
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+
+            const day = date.getDate().toString().padStart(2, '0');
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const month = months[date.getMonth()];
+            const year = date.getFullYear();
+
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const dayName = days[date.getDay()];
+
+            formattedDate = `${hours}:${minutes} - ${day} ${month}, ${year} (${dayName})`;
+        }
+
+        document.getElementById('modalSentAt').textContent = formattedDate;
+
+        // Set form actions
+        document.getElementById('resendForm').action = "/users/" + userId + "/resend-invitation";
+        document.getElementById('deleteForm').action = "/users/" + userId + "/delete";
+
+        modal.style.display = "block";
+    }
+
+    function closePendingModal() {
+        document.getElementById('pendingModal').style.display = "none";
+    }
+
+    // Close when clicking outside
+    window.onclick = function (event) {
+        const modal = document.getElementById('pendingModal');
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>
 {% endblock %}

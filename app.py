@@ -3,7 +3,7 @@ from functools import wraps
 import os
 from lib.data import init_db, get_db
 from lib.auth import login_user, logout_user, require_login, require_admin, get_current_user
-from lib.users import create_user, get_all_users, update_user, delete_user, get_user_by_id, update_user_password, create_password_reset_token, verify_reset_token, update_user_notifications, send_activation_email
+from lib.users import create_user, get_all_users, update_user, delete_user, get_user_by_id, update_user_password, create_password_reset_token, verify_reset_token, update_user_notifications, send_activation_email, get_latest_activation_token, resend_activation_email
 from lib.users import update_user_profile, verify_email_change
 from lib.groups import create_group, get_all_groups, get_all_groups_with_counts, add_user_to_group, remove_user_from_group, get_user_groups, get_group_members, get_group_by_id, update_group
 from lib.meetings import create_meeting, get_all_meetings, update_meeting, delete_meeting, get_meeting_by_id, get_meetings_this_week, get_meetings_by_month, record_meeting_response, get_meeting_responses, get_meetings_by_tags, format_meeting_datetime, get_all_tags
@@ -73,6 +73,16 @@ def dashboard():
 @require_login
 def users():
     all_users = get_all_users()
+    
+    # Add status and token info
+    for user in all_users:
+        if user['password_hash'] is None:
+            user['status'] = 'pending'
+            token = get_latest_activation_token(user['id'])
+            user['token_info'] = token
+        else:
+            user['status'] = 'active'
+            
     return render_template('users.html', users=all_users)
 
 @app.route('/users/create', methods=['GET', 'POST'])
@@ -90,6 +100,15 @@ def create_user_route():
             flash('Failed to create user', 'error')
     
     return render_template('user_form.html')
+
+@app.route('/users/<int:user_id>/resend-invitation', methods=['POST'])
+@require_admin
+def resend_invitation(user_id):
+    if resend_activation_email(user_id):
+        flash('Invitation email resent successfully!', 'success')
+    else:
+        flash('Failed to resend invitation email', 'error')
+    return redirect(url_for('users'))
 
 @app.route('/activate/<token>', methods=['GET', 'POST'])
 def activate_account(token):
