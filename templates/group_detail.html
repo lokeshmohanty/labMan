@@ -9,17 +9,25 @@
             ← Back to Groups
         </a>
     </div>
-    
+
     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
         <div>
             <h1 style="color: var(--primary); margin-bottom: 0.5rem;">{{ group.name }}</h1>
-            <p style="color: var(--text-light); font-size: 1.1rem;">{{ group.description or 'No description provided' }}</p>
+            <p style="color: var(--text-light); font-size: 1.1rem;">{{ group.description or 'No description provided' }}
+            </p>
         </div>
         {% if session.is_admin and group.name != 'Airex Lab' %}
-        <a href="{{ url_for('edit_group', group_id=group.id) }}" class="btn btn-primary">Edit Group</a>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="{{ url_for('edit_group', group_id=group.id) }}" class="btn btn-primary">Edit Group</a>
+            <form method="POST" action="{{ url_for('delete_group_route', group_id=group.id) }}"
+                onsubmit="return confirm('Are you sure you want to delete this group? This will remove all user associations.');"
+                style="display: inline;">
+                <button type="submit" class="btn btn-danger">Delete Group</button>
+            </form>
+        </div>
         {% endif %}
     </div>
-    
+
     {% if session.is_admin %}
     <div class="card" style="background-color: var(--bg-light); padding: 1.5rem; margin-bottom: 2rem;">
         <h3 style="color: var(--primary); margin-bottom: 1rem;">Add Member to Group</h3>
@@ -39,7 +47,7 @@
         </form>
     </div>
     {% endif %}
-    
+
     <table class="table">
         <thead>
             <tr>
@@ -67,9 +75,8 @@
                 <td>{{ member.joined_at[:10] }}</td>
                 {% if session.is_admin %}
                 <td>
-                    <form method="POST" action="{{ url_for('remove_member', group_id=group.id, user_id=member.id) }}" 
-                          style="display: inline;"
-                          onsubmit="return confirm('Remove this member from the group?');">
+                    <form method="POST" action="{{ url_for('remove_member', group_id=group.id, user_id=member.id) }}"
+                        style="display: inline;" onsubmit="return confirm('Remove this member from the group?');">
                         <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem;">Remove</button>
                     </form>
                 </td>
@@ -78,7 +85,7 @@
             {% endfor %}
         </tbody>
     </table>
-    
+
     {% if not members %}
     <p style="text-align: center; color: var(--text-light); padding: 2rem;">No members in this group yet.</p>
     {% endif %}

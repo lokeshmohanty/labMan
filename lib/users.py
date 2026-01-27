@@ -413,10 +413,8 @@ def send_email_verification(email, name, verification_link):
 def delete_user(user_id):
     """Delete a user"""
     try:
-        execute_db('''
-                   DELETE FROM users WHERE id = ?;
-                   DELETE FROM user_groups WHERE user_id = ?
-                   ''', (user_id, user_id))
+        execute_db('DELETE FROM user_groups WHERE user_id = ?', (user_id,))
+        execute_db('DELETE FROM users WHERE id = ?', (user_id,))
         return True
     except Exception as e:
         print(f"Error deleting user: {e}")

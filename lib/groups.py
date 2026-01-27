@@ -77,10 +77,8 @@ def delete_group(group_id):
             print("Cannot delete default 'airex' group")
             return False
         
-        execute_db('''
-                   DELETE FROM research_groups WHERE id = ?; 
-                   DELETE FROM user_groups WHERE group_id = ?
-                   ''', (group_id,group_id))
+        execute_db('DELETE FROM user_groups WHERE group_id = ?', (group_id,))
+        execute_db('DELETE FROM research_groups WHERE id = ?', (group_id,))
         return True
     except Exception as e:
         print(f"Error deleting group: {e}")

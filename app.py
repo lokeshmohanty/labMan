@@ -5,7 +5,7 @@ from lib.data import init_db, get_db
 from lib.auth import login_user, logout_user, require_login, require_admin, get_current_user
 from lib.users import create_user, get_all_users, update_user, delete_user, get_user_by_id, update_user_password, create_password_reset_token, verify_reset_token, update_user_notifications, send_activation_email, get_latest_activation_token, resend_activation_email
 from lib.users import update_user_profile, verify_email_change
-from lib.groups import create_group, get_all_groups, get_all_groups_with_counts, add_user_to_group, remove_user_from_group, get_user_groups, get_group_members, get_group_by_id, update_group
+from lib.groups import create_group, get_all_groups, get_all_groups_with_counts, add_user_to_group, remove_user_from_group, get_user_groups, get_group_members, get_group_by_id, update_group, delete_group
 from lib.meetings import create_meeting, get_all_meetings, update_meeting, delete_meeting, get_meeting_by_id, get_meetings_this_week, get_meetings_by_month, record_meeting_response, get_meeting_responses, get_meetings_by_tags, format_meeting_datetime, get_all_tags
 from lib.content import upload_content, get_content, delete_content, get_content_by_id, check_content_access, get_content_by_share_link, get_content_by_group, update_content
 from lib.inventory import add_inventory_item, get_all_inventory, update_inventory_item, delete_inventory_item
@@ -384,6 +384,25 @@ def remove_member(group_id, user_id):
     else:
         flash('Failed to remove member', 'error')
     return redirect(url_for('group_detail', group_id=group_id))
+
+
+@app.route('/groups/<int:group_id>/delete', methods=['POST'])
+@require_admin
+def delete_group_route(group_id):
+    group = get_group_by_id(group_id)
+    if not group:
+        flash('Group not found', 'error')
+        return redirect(url_for('groups'))
+    
+    if group['name'] == os.getenv('LAB_NAME', 'Lab Manager'):
+        flash('Cannot delete the default Lab group', 'error')
+        return redirect(url_for('groups'))
+    
+    if delete_group(group_id):
+        flash('Group deleted successfully!', 'success')
+    else:
+        flash('Failed to delete group', 'error')
+    return redirect(url_for('groups'))
 
 # Meeting Management
 @app.route('/meetings')

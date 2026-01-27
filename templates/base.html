@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +11,7 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         :root {
             --primary: #8B4513;
             --primary-dark: #654321;
@@ -26,21 +27,21 @@
             --error: #C62828;
             --warning: #F57C00;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-light);
             color: var(--text-dark);
             line-height: 1.6;
         }
-        
+
         .navbar {
             background-color: var(--primary);
             color: white;
             padding: 1rem 2rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        
+
         .navbar-container {
             max-width: 1400px;
             margin: 0 auto;
@@ -48,20 +49,20 @@
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .navbar-brand {
             font-size: 1.5rem;
             font-weight: bold;
             color: white;
             text-decoration: none;
         }
-        
+
         .navbar-menu {
             display: flex;
             gap: 1.5rem;
             list-style: none;
         }
-        
+
         .navbar-menu a {
             color: white;
             text-decoration: none;
@@ -69,26 +70,26 @@
             border-radius: 4px;
             transition: background-color 0.3s;
         }
-        
+
         .navbar-menu a:hover {
             background-color: var(--primary-dark);
         }
-        
+
         .container {
             max-width: 1400px;
             margin: 2rem auto;
             padding: 0 2rem;
         }
-        
+
         .card {
             background-color: var(--bg-white);
             border-radius: 8px;
             padding: 2rem;
             margin-bottom: 2rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             border: 1px solid var(--border);
         }
-        
+
         .card-header {
             font-size: 1.5rem;
             color: var(--primary);
@@ -96,7 +97,7 @@
             padding-bottom: 0.5rem;
             border-bottom: 2px solid var(--accent);
         }
-        
+
         .btn {
             padding: 0.75rem 1.5rem;
             border: none;
@@ -106,46 +107,48 @@
             text-decoration: none;
             display: inline-block;
             transition: all 0.3s;
+            line-height: 1.5;
+            vertical-align: middle;
         }
-        
+
         .btn-primary {
             background-color: var(--primary);
             color: white;
         }
-        
+
         .btn-primary:hover {
             background-color: var(--primary-dark);
         }
-        
+
         .btn-secondary {
             background-color: var(--secondary);
             color: white;
         }
-        
+
         .btn-secondary:hover {
             background-color: var(--primary-light);
         }
-        
+
         .btn-danger {
             background-color: var(--error);
             color: white;
         }
-        
+
         .btn-danger:hover {
             background-color: #B71C1C;
         }
-        
+
         .form-group {
             margin-bottom: 1.5rem;
         }
-        
+
         .form-group label {
             display: block;
             margin-bottom: 0.5rem;
             color: var(--text-dark);
             font-weight: 500;
         }
-        
+
         .form-control {
             width: 100%;
             padding: 0.75rem;
@@ -154,19 +157,19 @@
             font-size: 1rem;
             background-color: var(--bg-white);
         }
-        
+
         .form-control:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
         }
-        
+
         .table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 1rem;
         }
-        
+
         .table th {
             background-color: var(--accent);
             color: white;
@@ -174,47 +177,47 @@
             text-align: left;
             font-weight: 600;
         }
-        
+
         .table td {
             padding: 1rem;
             border-bottom: 1px solid var(--border);
         }
-        
+
         .table tr:hover {
             background-color: var(--bg-light);
         }
-        
+
         .alert {
             padding: 1rem;
             border-radius: 4px;
             margin-bottom: 1rem;
         }
-        
+
         .alert-success {
             background-color: #C8E6C9;
             color: var(--success);
             border: 1px solid var(--success);
         }
-        
+
         .alert-error {
             background-color: #FFCDD2;
             color: var(--error);
             border: 1px solid var(--error);
         }
-        
+
         .grid {
             display: grid;
             gap: 2rem;
         }
-        
+
         .grid-2 {
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         }
-        
+
         .grid-3 {
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         }
-        
+
         .badge {
             display: inline-block;
             padding: 0.25rem 0.75rem;
@@ -222,95 +225,98 @@
             font-size: 0.875rem;
             font-weight: 500;
         }
-        
+
         .badge-admin {
             background-color: var(--secondary);
             color: white;
         }
-        
+
         .badge-user {
             background-color: var(--accent);
             color: white;
         }
-        
+
         .checkbox-group {
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
-        
+
         /* Mobile Responsive Styles */
         @media (max-width: 768px) {
             .navbar-container {
                 flex-direction: column;
                 gap: 0.5rem;
             }
-            
+
             .navbar-menu {
                 flex-direction: column;
                 width: 100%;
                 gap: 0.5rem;
             }
-            
+
             .navbar-menu li {
                 width: 100%;
             }
-            
+
             .navbar-menu a {
                 display: block;
                 width: 100%;
                 text-align: center;
             }
-            
+
             .container {
                 padding: 0 1rem;
                 margin: 1rem auto;
             }
-            
-            .grid-2, .grid-3 {
+
+            .grid-2,
+            .grid-3 {
                 grid-template-columns: 1fr !important;
             }
-            
+
             .table {
                 font-size: 0.85rem;
                 display: block;
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
             }
-            
-            .table th, .table td {
+
+            .table th,
+            .table td {
                 padding: 0.5rem;
                 min-width: 100px;
             }
-            
+
             .btn {
                 padding: 0.6rem 1rem;
                 font-size: 0.9rem;
             }
-            
+
             .card {
                 padding: 1rem;
                 margin-bottom: 1rem;
             }
-            
+
             .card-header {
                 font-size: 1.25rem;
             }
-            
+
             .form-control {
-                font-size: 16px; /* Prevents zoom on iOS */
+                font-size: 16px;
+                /* Prevents zoom on iOS */
             }
         }
-        
+
         @media (max-width: 480px) {
             .navbar-brand {
                 font-size: 1.2rem;
             }
-            
+
             body {
                 font-size: 14px;
             }
-            
+
             .btn {
                 width: 100%;
                 margin-bottom: 0.5rem;
@@ -318,6 +324,7 @@
         }
     </style>
 </head>
+
 <body>
     {% if session.user_id %}
     <nav class="navbar">
@@ -338,37 +345,40 @@
                                                       background: var(--primary-dark); min-width: 200px; 
                                                       list-style: none; padding: 0.5rem 0; border-radius: 4px;
                                                       box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 1000;">
-                        <li><a href="{{ url_for('edit_profile') }}" style="display: block; padding: 0.5rem 1rem;">Edit Profile</a></li>
-                        <li><a href="{{ url_for('change_password') }}" style="display: block; padding: 0.5rem 1rem;">Change Password</a></li>
-                        <li><a href="{{ url_for('logout') }}" style="display: block; padding: 0.5rem 1rem;">Logout</a></li>
+                        <li><a href="{{ url_for('edit_profile') }}" style="display: block; padding: 0.5rem 1rem;">Edit
+                                Profile</a></li>
+                        <li><a href="{{ url_for('change_password') }}"
+                                style="display: block; padding: 0.5rem 1rem;">Change Password</a></li>
+                        <li><a href="{{ url_for('logout') }}" style="display: block; padding: 0.5rem 1rem;">Logout</a>
+                        </li>
                     </ul>
                 </li>
             </ul>
         </div>
     </nav>
     {% endif %}
-    
+
     <div class="container">
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
         {% endwith %}
-        
+
         {% block content %}{% endblock %}
     </div>
-    
+
     <script>
         function toggleDropdown(event) {
             event.preventDefault();
             const dropdown = document.getElementById('profileDropdown');
             dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
         }
-        
+
         // Close dropdown when clicking outside
-        document.addEventListener('click', function(event) {
+        document.addEventListener('click', function (event) {
             const dropdown = document.getElementById('profileDropdown');
             const isClickInside = event.target.closest('li');
             if (!isClickInside && dropdown) {
@@ -377,4 +387,5 @@
         });
     </script>
 </body>
+
 </html>
