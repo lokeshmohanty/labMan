@@ -184,7 +184,7 @@ Best regards,
     
     html = f"""
 <html>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #3E2723;">
+<body style="font-family: 'Nunito', Arial, sans-serif; line-height: 1.6; color: #3E2723;">
     <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
         <h2 style="color: #8B4513;">Welcome to {lab_name}!</h2>
         <p>Hello {name},</p>
@@ -232,7 +232,7 @@ Best regards,
     
     html = f"""
 <html>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #3E2723;">
+<body style="font-family: 'Nunito', Arial, sans-serif; line-height: 1.6; color: #3E2723;">
     <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
         <h2 style="color: #8B4513;">Password Reset Request</h2>
         <p>Hello {name},</p>
@@ -281,7 +281,7 @@ Best regards,
     
     html = f"""
 <html>
-<body style="font-family: Arial, sans-serif; color: #3E2723;">
+<body style="font-family: 'Nunito', Arial, sans-serif; color: #3E2723;">
     <h2 style="color: #8B4513;">Verify Your Email Change</h2>
     <p>Hello {name},</p>
     <p>You requested to change your email address to: <strong>{email}</strong></p>
@@ -322,7 +322,7 @@ Best regards,
     
     html = f"""
 <html>
-<body style="font-family: Arial, sans-serif; color: #3E2723;">
+<body style="font-family: 'Nunito', Arial, sans-serif; color: #3E2723;">
     <h2 style="color: #8B4513;">New Meeting Scheduled</h2>
     <p>Hello {recipient['name']},</p>
     <p>A new meeting has been scheduled:</p>
@@ -367,7 +367,7 @@ Best regards,
     
     html = f"""
 <html>
-<body style="font-family: Arial, sans-serif; color: #3E2723;">
+<body style="font-family: 'Nunito', Arial, sans-serif; color: #3E2723;">
     <h2 style="color: #8B4513;">Meeting Time Changed</h2>
     <p>Hello {recipient['name']},</p>
     <p>The meeting <strong>"{meeting['title']}"</strong> has been updated.</p>
@@ -410,7 +410,7 @@ Best regards,
     
     html = f"""
 <html>
-<body style="font-family: Arial, sans-serif; color: #3E2723;">
+<body style="font-family: 'Nunito', Arial, sans-serif; color: #3E2723;">
     <h2 style="color: #8B4513;">New Meeting Content</h2>
     <p>Hello {recipient['name']},</p>
     <p>New content has been uploaded to meeting <strong>"{meeting['title']}"</strong>:</p>
