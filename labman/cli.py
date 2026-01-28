@@ -10,6 +10,52 @@ from labman.server import app
 from dotenv import load_dotenv, dotenv_values
 import difflib
 
+def _stop_server(quiet=False):
+    """Internal helper to stop the production server"""
+    pid_file = "gunicorn.pid"
+    if not os.path.exists(pid_file):
+        # Try to stop via pkill if pid file missing
+        if not quiet:
+            click.echo("PID file not found. Trying to stop any running labman gunicorn process...")
+        if os.system("pkill -f 'labman.server:app'") == 0:
+            if not quiet:
+                click.secho("Server stopped.", fg="green")
+            return True
+        else:
+            if not quiet:
+                click.secho("No running server found.", fg="yellow")
+            return False
+
+    try:
+        with open(pid_file, "r") as f:
+            pid = int(f.read().strip())
+        
+        os.kill(pid, 15) # SIGTERM
+        if not quiet:
+            click.secho(f"Stopped server (PID {pid})", fg="green")
+        
+        # Wait a bit for the process to actually exit
+        for _ in range(5):
+            try:
+                os.kill(pid, 0)
+                time.sleep(0.5)
+            except ProcessLookupError:
+                break
+                
+        if os.path.exists(pid_file):
+            os.remove(pid_file)
+        return True
+    except ProcessLookupError:
+        if not quiet:
+            click.secho("Process not found. Cleaning up PID file.", fg="yellow")
+        if os.path.exists(pid_file):
+            os.remove(pid_file)
+        return True
+    except Exception as e:
+        if not quiet:
+            click.secho(f"Error stopping server: {e}", fg="red")
+        return False
+
 @click.group()
 def main():
     """Lab Manager CLI"""
@@ -26,32 +72,23 @@ def serve(mode, port, host):
         app.run(debug=True, host=host, port=port)
     
     elif mode == 'stop':
-        if not os.path.exists("gunicorn.pid"):
-            # Try to stop via pkill if pid file missing
-            click.echo("PID file not found. Trying to stop any running labman gunicorn process...")
-            if os.system("pkill -f 'labman.server:app'") == 0:
-                 click.secho("Server stopped.", fg="green")
-            else:
-                 click.secho("No running server found.", fg="yellow")
-            return
-
-        try:
-            with open("gunicorn.pid", "r") as f:
-                pid = int(f.read().strip())
-            
-            os.kill(pid, 15) # SIGTERM
-            click.secho(f"Stopped server (PID {pid})", fg="green")
-            os.remove("gunicorn.pid")
-        except ProcessLookupError:
-            click.secho("Process not found. Cleaning up PID file.", fg="yellow")
-            os.remove("gunicorn.pid")
-        except Exception as e:
-            click.secho(f"Error stopping server: {e}", fg="red")
+        _stop_server()
+        return
 
     else: # prod
+        # Restart if already running
+        if os.path.exists("gunicorn.pid"):
+            click.echo("Server is already running. Restarting...")
+            _stop_server(quiet=True)
+            time.sleep(1) # Give it a moment to release the port
         click.echo(f"Starting prod server on {host}:{port} using gunicorn...")
+        
         # Check if gunicorn is installed
-        if os.system("which gunicorn > /dev/null") != 0:
+        gunicorn_cmd = "gunicorn"
+        if os.path.exists(".venv/bin/gunicorn"):
+            gunicorn_cmd = os.path.abspath(".venv/bin/gunicorn")
+        
+        if os.system(f"which {gunicorn_cmd} > /dev/null") != 0 and not os.path.exists(".venv/bin/gunicorn"):
             click.secho("Error: gunicorn is not installed. Please install it (pip install gunicorn).", fg="red")
             return
         
@@ -61,8 +98,10 @@ def serve(mode, port, host):
         log_file = f"logs/{date_str}.log"
         
         # Run gunicorn as daemon
+        import sys
         cmd = [
-            "gunicorn",
+            sys.executable,
+            "-m", "gunicorn",
             "-w", "4",
             "-b", f"{host}:{port}",
             "--daemon",
