@@ -442,7 +442,10 @@ def create_group_route():
             flash('Failed to create group', 'error')
     
     all_groups = get_all_groups()
-    return render_template('group_form.html', groups=all_groups)
+    lab_name = os.getenv('LAB_NAME', 'Lab Manager')
+    lab_group = next((g for g in all_groups if g['name'] == lab_name), None)
+    return render_template('group_form.html', groups=all_groups, lab_group=lab_group)
+
 
 @app.route('/groups/<int:group_id>/edit', methods=['GET', 'POST'])
 @require_admin
