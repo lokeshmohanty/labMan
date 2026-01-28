@@ -35,6 +35,15 @@ def require_login(f):
         if 'user_id' not in session:
             flash('Please log in to access this page', 'error')
             return redirect(url_for('login'))
+        
+        # Verify user still exists in database
+        user = query_db('SELECT id FROM users WHERE id = ?', [session['user_id']], one=True)
+        if not user:
+            # User was deleted, clear session
+            session.clear()
+            flash('Your account no longer exists. Please contact an administrator.', 'error')
+            return redirect(url_for('login'))
+        
         return f(*args, **kwargs)
     return decorated_function
 
@@ -45,7 +54,16 @@ def require_admin(f):
         if 'user_id' not in session:
             flash('Please log in to access this page', 'error')
             return redirect(url_for('login'))
-        if not session.get('is_admin', False):
+        
+        # Verify user still exists in database
+        user = query_db('SELECT id, is_admin FROM users WHERE id = ?', [session['user_id']], one=True)
+        if not user:
+            # User was deleted, clear session
+            session.clear()
+            flash('Your account no longer exists. Please contact an administrator.', 'error')
+            return redirect(url_for('login'))
+        
+        if not user['is_admin']:
             flash('Admin access required', 'error')
             return redirect(url_for('dashboard'))
         return f(*args, **kwargs)

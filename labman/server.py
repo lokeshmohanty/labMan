@@ -152,7 +152,7 @@ def dashboard():
     recent_meetings = get_meetings_this_week()[:3]
     for meeting in recent_meetings:
         meeting['meeting_time'] = format_meeting_datetime(meeting['meeting_time'])
-    user_groups = [g for g in get_user_groups(user['id']) if g['name'] != os.getenv('LAB_NAME', 'Lab Manager')]
+    user_groups = [g for g in get_user_groups(user['id'])]
     
     # Get research plan
     research_plan = get_research_plan(user['id'])
