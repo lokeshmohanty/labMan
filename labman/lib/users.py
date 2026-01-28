@@ -1,21 +1,8 @@
 from werkzeug.security import generate_password_hash
 from labman.lib.data import get_db, query_db, execute_db
+from labman.lib.helpers import get_lab_group, get_server_url
 from datetime import datetime, timedelta
 import secrets
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-
-# Email configuration
-SMTP_SERVER = os.getenv('SMTP_SERVER')
-SMTP_PORT = os.getenv('SMTP_PORT')
-SMTP_USERNAME = os.getenv('SMTP_USERNAME')
-SMTP_PASSWORD = os.getenv('SMTP_PASSWORD') or 'your-smtp-password'
-SENDER_EMAIL = os.getenv('SENDER_EMAIL')
 
 def create_user(name, email, password, is_admin=False):
     """Create a new user and send activation email"""
@@ -28,14 +15,16 @@ def create_user(name, email, password, is_admin=False):
         user_id = cursor.lastrowid
         
         # Add user to default Lab group
-        lab_name = os.getenv('LAB_NAME', 'Lab Manager')
-        lab_group = query_db('SELECT id FROM research_groups WHERE name = ?', [lab_name], one=True)
+        lab_group = get_lab_group()
         if lab_group:
             execute_db('INSERT INTO user_groups (user_id, group_id) VALUES (?, ?)',
                       (user_id, lab_group['id']))
         
-        # Send activation email
-        send_activation_email(email, name, user_id)
+        # Send activation email using centralized service
+        from labman.lib.email_service import send_activation_email
+        token = create_password_reset_token(user_id)
+        activation_link = f"{get_server_url()}/activate/{token}"
+        send_activation_email(email, name, activation_link)
         
         return True
     except Exception as e:

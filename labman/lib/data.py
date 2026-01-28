@@ -194,6 +194,20 @@ def init_db():
         )
     ''')
     
+    # Email failures table for tracking failed email attempts
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS email_failures (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email_type TEXT NOT NULL,
+            recipient TEXT NOT NULL,
+            error_message TEXT,
+            payload TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            retry_count INTEGER DEFAULT 0,
+            last_retry_at TIMESTAMP
+        )
+    ''')
+    
     # Create default Lab group if it doesn't exist
     lab_name = os.getenv('LAB_NAME', 'Lab Manager')
     existing_group = db.execute('SELECT id FROM research_groups WHERE name = ?', (lab_name,)).fetchone()

@@ -474,6 +474,10 @@ def edit_group(group_id):
 @require_login
 def group_detail(group_id):
     group = get_group_by_id(group_id)
+    if not group:
+        flash('Group not found', 'error')
+        return redirect(url_for('groups'))
+    
     members = get_group_members(group_id)
     all_users = get_all_users()
     return render_template('group_detail.html', group=group, members=members, all_users=all_users)

@@ -1,4 +1,5 @@
 from labman.lib.data import get_db, query_db, execute_db
+from labman.lib.helpers import get_lab_name
 
 def create_group(name, description, parent_id=None):
     """Create a new research group"""
@@ -53,10 +54,15 @@ def get_group_by_name(name):
 def update_group(group_id, name, description, parent_id=None):
     """Update group information"""
     try:
-        # Don't allow renaming Airex Lab group
+        # Don't allow renaming default Lab group
         group = get_group_by_id(group_id)
-        if group and group['name'] == 'Airex Lab' and name != 'Airex Lab':
-            print("Cannot rename default 'Airex Lab' group")
+        if not group:
+            print(f"Group {group_id} not found")
+            return False
+            
+        lab_name = get_lab_name()
+        if group['name'] == lab_name and name != lab_name:
+            print(f"Cannot rename default '{lab_name}' group")
             return False
         
         execute_db(
@@ -71,10 +77,15 @@ def update_group(group_id, name, description, parent_id=None):
 def delete_group(group_id):
     """Delete a research group"""
     try:
-        # Don't allow deleting the default 'airex' group
+        # Don't allow deleting the default Lab group
         group = get_group_by_id(group_id)
-        if group and group['name'] == 'airex':
-            print("Cannot delete default 'airex' group")
+        if not group:
+            print(f"Group {group_id} not found")
+            return False
+            
+        lab_name = get_lab_name()
+        if group['name'] == lab_name:
+            print(f"Cannot delete default '{lab_name}' group")
             return False
         
         execute_db('DELETE FROM user_groups WHERE group_id = ?', (group_id,))
@@ -99,10 +110,15 @@ def add_user_to_group(user_id, group_id):
 def remove_user_from_group(user_id, group_id):
     """Remove a user from a research group"""
     try:
-        # Don't allow removing from default 'airex' group
+        # Don't allow removing from default Lab group
         group = get_group_by_id(group_id)
-        if group and group['name'] == 'airex':
-            print("Cannot remove user from default 'airex' group")
+        if not group:
+            print(f"Group {group_id} not found")
+            return False
+            
+        lab_name = get_lab_name()
+        if group['name'] == lab_name:
+            print(f"Cannot remove user from default '{lab_name}' group")
             return False
         
         execute_db(

@@ -147,7 +147,11 @@ def update_task_due_date(task_id, new_due_date):
     try:
         # Get current task to check existing due date
         current_task = get_task_by_id(task_id)
-        if current_task and current_task.get('due_date'):
+        if not current_task:
+            print(f"Task {task_id} not found")
+            return False
+            
+        if current_task.get('due_date'):
             old_date = str(current_task['due_date']).split(' ')[0]
             if old_date != new_due_date:
                 execute_db('UPDATE research_tasks SET due_date = ?, previous_due_date = ? WHERE id = ?', 

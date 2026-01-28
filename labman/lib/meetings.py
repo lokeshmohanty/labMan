@@ -1,4 +1,6 @@
 from labman.lib.data import get_db, query_db, execute_db
+from labman.lib.helpers import get_lab_members
+from labman.lib.email_queue import email_queue
 from datetime import datetime
 import calendar
 
@@ -12,15 +14,16 @@ def create_meeting(title, description, meeting_time, created_by, group_id=None, 
         )
         meeting_id = cursor.lastrowid
         
-        # Send notifications to Airex Lab group members
-        from labman.lib.users import send_meeting_notification
-        from labman.lib.groups import get_group_members
+        # Send notifications to Lab group members in background
+        from labman.lib.email_service import send_meeting_notification
         
-        airex_group = query_db('SELECT id FROM research_groups WHERE name = ?', ['Airex Lab'], one=True)
-        if airex_group:
-            members = get_group_members(airex_group['id'])
-            meeting = get_meeting_by_id(meeting_id)
-            send_meeting_notification(meeting, members)
+        members = get_lab_members()
+        meeting = get_meeting_by_id(meeting_id)
+        
+        if meeting and members:
+            # Queue notifications in background
+            for member in members:
+                email_queue.enqueue(send_meeting_notification, recipient=member, meeting=meeting)
         
         return True
     except Exception as e:
@@ -125,14 +128,18 @@ def update_meeting(meeting_id, title, description, meeting_time, group_id=None, 
         
         # Send notification if time changed
         if send_notification:
-            from labman.lib.users import send_meeting_update_notification
-            from labman.lib.groups import get_group_members
+            from labman.lib.email_service import send_meeting_update_notification
             
             meeting = get_meeting_by_id(meeting_id)
-            airex_group = query_db('SELECT id FROM research_groups WHERE name = ?', ['Airex Lab'], one=True)
-            if airex_group:
-                members = get_group_members(airex_group['id'])
-                send_meeting_update_notification(meeting, members)
+            if not meeting:
+                print(f"Meeting {meeting_id} not found for notification")
+                return True  # Update succeeded, just skip notification
+            
+            members = get_lab_members()
+            if members:
+                # Queue update notifications in background
+                for member in members:
+                    email_queue.enqueue(send_meeting_update_notification, recipient=member, meeting=meeting)
         
         return True
     except Exception as e:

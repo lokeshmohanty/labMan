@@ -3,6 +3,8 @@ import secrets
 from werkzeug.utils import secure_filename
 from labman.lib.data import get_db, query_db, execute_db
 from labman.lib.auth import check_user_group_access
+from labman.lib.helpers import get_lab_members
+from labman.lib.email_queue import email_queue
 
 def allowed_file(filename):
     """Check if file extension is allowed - allowing all for now"""
@@ -57,16 +59,17 @@ def upload_content(file, title, description, uploaded_by, group_id=None, meeting
         # Send notification if uploaded to a meeting
         if meeting_id:
             from labman.lib.meetings import get_meeting_by_id
-            from labman.lib.users import send_content_notification
-            from labman.lib.groups import get_group_members
+            from labman.lib.email_service import send_content_notification
             
             meeting = get_meeting_by_id(meeting_id)
             content_item = get_content_by_id(content_id)
             
-            airex_group = query_db('SELECT id FROM research_groups WHERE name = ?', ['Airex Lab'], one=True)
-            if airex_group:
-                members = get_group_members(airex_group['id'])
-                send_content_notification(meeting, content_item, members)
+            if meeting and content_item:
+                members = get_lab_members()
+                if members:
+                    # Queue content notifications in background
+                    for member in members:
+                        email_queue.enqueue(send_content_notification, recipient=member, meeting=meeting, content=content_item)
         
         return True
     except Exception as e:
@@ -152,7 +155,10 @@ def update_content(content_id, title, description, group_id=None, meeting_id=Non
         share_link = None
         if access_level == 'link':
             existing = get_content_by_id(content_id)
-            share_link = existing['share_link'] if existing and existing['share_link'] else generate_share_link()
+            if existing:
+                share_link = existing.get('share_link') or generate_share_link()
+            else:
+                share_link = generate_share_link()
         
         execute_db(
             'UPDATE content SET title = ?, description = ?, group_id = ?, meeting_id = ?, research_plan_id = ?, access_level = ?, share_link = ? WHERE id = ?',
