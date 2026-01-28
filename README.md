@@ -16,6 +16,11 @@ An opinionated lab management system for academic labs, now available as a CLI t
 - Python 3.10+
 - `uv` (recommended) or `pip`
 
+### Install from pip
+```bash
+pip install ra-labman
+```
+
 ### Install from source
 ```bash
 git clone https://github.com/lokeshmohanty/labman.git
