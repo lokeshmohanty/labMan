@@ -1,4 +1,4 @@
-from lib.data import get_db, query_db, execute_db
+from labman.lib.data import get_db, query_db, execute_db
 
 def create_group(name, description, parent_id=None):
     """Create a new research group"""

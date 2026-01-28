@@ -1,7 +1,7 @@
 from flask import session, redirect, url_for, flash
 from functools import wraps
 from werkzeug.security import check_password_hash
-from lib.data import get_db, query_db
+from labman.lib.data import get_db, query_db
 
 def login_user(email, password):
     """Authenticate user and return user object if successful"""

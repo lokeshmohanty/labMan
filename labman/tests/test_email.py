@@ -16,10 +16,9 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# Import configuration from lib/users
+# Import configuration from labman.lib.users
 try:
-    sys.path.insert(0, '.')
-    from lib.users import SMTP_SERVER, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SENDER_EMAIL
+    from labman.lib.users import SMTP_SERVER, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SENDER_EMAIL
     
     # Get Lab Name
     LAB_NAME = os.getenv('LAB_NAME', 'Lab Manager')
@@ -32,7 +31,7 @@ try:
     print()
 except ImportError as e:
     print(f"✗ Error importing configuration: {e}")
-    print("Make sure you're running this script from the project root directory.")
+    print("Ensure labman package is installed or PYTHONPATH is set.")
     sys.exit(1)
 
 def test_email():

@@ -1,8 +1,8 @@
 import os
 import secrets
 from werkzeug.utils import secure_filename
-from lib.data import get_db, query_db, execute_db
-from lib.auth import check_user_group_access
+from labman.lib.data import get_db, query_db, execute_db
+from labman.lib.auth import check_user_group_access
 
 def allowed_file(filename):
     """Check if file extension is allowed - allowing all for now"""
@@ -56,9 +56,9 @@ def upload_content(file, title, description, uploaded_by, group_id=None, meeting
         
         # Send notification if uploaded to a meeting
         if meeting_id:
-            from lib.meetings import get_meeting_by_id
-            from lib.users import send_content_notification
-            from lib.groups import get_group_members
+            from labman.lib.meetings import get_meeting_by_id
+            from labman.lib.users import send_content_notification
+            from labman.lib.groups import get_group_members
             
             meeting = get_meeting_by_id(meeting_id)
             content_item = get_content_by_id(content_id)

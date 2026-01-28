@@ -1,4 +1,4 @@
-from lib.data import get_db, query_db, execute_db
+from labman.lib.data import get_db, query_db, execute_db
 
 def add_server(hostname, ip_address, admin_name, location, description):
     """Add a new server"""

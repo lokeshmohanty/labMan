@@ -1,16 +1,36 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file, jsonify, abort
 from functools import wraps
 import os
-from lib.data import init_db, get_db
-from lib.auth import login_user, logout_user, require_login, require_admin, get_current_user
-from lib.users import create_user, get_all_users, update_user, delete_user, get_user_by_id, update_user_password, create_password_reset_token, verify_reset_token, update_user_notifications, send_activation_email, get_latest_activation_token, resend_activation_email
-from lib.users import update_user_profile, verify_email_change
-from lib.groups import create_group, get_all_groups, get_all_groups_with_counts, add_user_to_group, remove_user_from_group, get_user_groups, get_group_members, get_group_by_id, update_group, delete_group
-from lib.meetings import create_meeting, get_all_meetings, update_meeting, delete_meeting, get_meeting_by_id, get_meetings_this_week, get_meetings_by_month, record_meeting_response, get_meeting_responses, get_meetings_by_tags, format_meeting_datetime, get_all_tags
-from lib.content import upload_content, get_content, delete_content, get_content_by_id, check_content_access, get_content_by_share_link, get_content_by_group, update_content
-from lib.inventory import add_inventory_item, get_all_inventory, update_inventory_item, delete_inventory_item
-from lib.servers import add_server, get_all_servers, update_server, delete_server, get_server_by_id
-from lib.research import get_research_plan, update_research_problem, add_research_task, update_research_task_status, delete_research_task, get_task_by_id, update_research_links, update_task_due_date
+from werkzeug.middleware.proxy_fix import ProxyFix
+from labman.lib.data import init_db, get_db
+# ... imports ...
+from datetime import datetime, timedelta
+from dotenv import load_dotenv
+
+load_dotenv()
+
+app = Flask(__name__)
+# Fix for gunicorn
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
+@app.before_request
+def check_allowed_hosts():
+    allowed = os.getenv('ALLOWED_HOSTS', '0.0.0.0')
+    if allowed == '0.0.0.0':
+        return
+    
+    host = request.host.split(':')[0]
+    if host not in allowed.split(','):
+        abort(403)
+from labman.lib.auth import login_user, logout_user, require_login, require_admin, get_current_user
+from labman.lib.users import create_user, get_all_users, update_user, delete_user, get_user_by_id, update_user_password, create_password_reset_token, verify_reset_token, update_user_notifications, send_activation_email, get_latest_activation_token, resend_activation_email
+from labman.lib.users import update_user_profile, verify_email_change
+from labman.lib.groups import create_group, get_all_groups, get_all_groups_with_counts, add_user_to_group, remove_user_from_group, get_user_groups, get_group_members, get_group_by_id, update_group, delete_group
+from labman.lib.meetings import create_meeting, get_all_meetings, update_meeting, delete_meeting, get_meeting_by_id, get_meetings_this_week, get_meetings_by_month, record_meeting_response, get_meeting_responses, get_meetings_by_tags, format_meeting_datetime, get_all_tags
+from labman.lib.content import upload_content, get_content, delete_content, get_content_by_id, check_content_access, get_content_by_share_link, get_content_by_group, update_content
+from labman.lib.inventory import add_inventory_item, get_all_inventory, update_inventory_item, delete_inventory_item
+from labman.lib.servers import add_server, get_all_servers, update_server, delete_server, get_server_by_id
+from labman.lib.research import get_research_plan, update_research_problem, add_research_task, update_research_task_status, delete_research_task, get_task_by_id, update_research_links, update_task_due_date
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
@@ -113,7 +133,7 @@ def update_task_start_date_route(task_id):
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
         
     start_date = request.form.get('start_date')
-    from lib.research import update_task_start_date
+    from labman.lib.research import update_task_start_date
     if update_task_start_date(task_id, start_date):
         return redirect(url_for('dashboard'))
     else:
@@ -219,7 +239,7 @@ def activate_account(token):
             return render_template('activate_account.html', token=token)
         
         if update_user_password(user_id, new_password):
-            from lib.data import execute_db
+            from labman.lib.data import execute_db
             execute_db('UPDATE password_reset_tokens SET used = 1 WHERE user_id = ? AND token = ?', 
                       (user_id, token))
             flash('Account activated! Please login with your password.', 'success')
@@ -355,7 +375,7 @@ def forgot_password():
     if request.method == 'POST':
         email = request.form.get('email')
         
-        from lib.users import get_user_by_email, send_password_reset_email
+        from labman.lib.users import get_user_by_email, send_password_reset_email
         user = get_user_by_email(email)
         
         if user:
@@ -390,7 +410,7 @@ def reset_password(token):
             return render_template('reset_password.html', token=token)
         
         if update_user_password(user_id, new_password):
-            from lib.data import execute_db
+            from labman.lib.data import execute_db
             execute_db('UPDATE password_reset_tokens SET used = 1 WHERE user_id = ? AND token = ?', 
                       (user_id, token))
             flash('Password reset successfully! Please login with your new password.', 'success')
@@ -499,7 +519,7 @@ def delete_group_route(group_id):
 @app.route('/research')
 @require_login
 def research():
-    from lib.groups import get_research_tree
+    from labman.lib.groups import get_research_tree
     tree = get_research_tree()
     return render_template('research.html', tree=tree)
 
@@ -815,7 +835,7 @@ def edit_inventory(item_id):
         else:
             flash('Failed to update inventory item', 'error')
     
-    from lib.data import query_db
+    from labman.lib.data import query_db
     item = query_db('SELECT * FROM inventory WHERE id = ?', (item_id,), one=True)
     return render_template('inventory_form.html', item=item)
 

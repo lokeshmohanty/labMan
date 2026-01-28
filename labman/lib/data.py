@@ -5,7 +5,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE = os.getenv('LAB_NAME', 'Demo Lab').lower().replace(" ", "_") + '.db'
+
+
+# Ensure data directory exists in the project root
+# Use current working directory as the base (where labman is run from)
+db_dir = os.path.join(os.getcwd(), 'data')
+os.makedirs(db_dir, exist_ok=True)
+
+db_filename = os.getenv('LAB_NAME', 'Demo Lab').lower().replace(" ", "_") + '.db'
+DATABASE = os.path.join(db_dir, db_filename)
 
 def get_db():
     """Get database connection"""

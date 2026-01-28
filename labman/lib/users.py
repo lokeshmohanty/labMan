@@ -1,5 +1,5 @@
 from werkzeug.security import generate_password_hash
-from lib.data import get_db, query_db, execute_db
+from labman.lib.data import get_db, query_db, execute_db
 from datetime import datetime, timedelta
 import secrets
 import smtplib
@@ -45,7 +45,9 @@ def create_user(name, email, password, is_admin=False):
 def send_activation_email(email, name, user_id):
     """Send account activation email"""
     token = create_password_reset_token(user_id)
-    activation_link = f"http://localhost:9000/activate/{token}"
+    host = os.getenv('HOST_IP', 'localhost')
+    port = os.getenv('SERVER_PORT', '9000')
+    activation_link = f"http://{host}:{port}/activate/{token}"
     
     try:
         lab_name = os.getenv('LAB_NAME', 'Lab Manager')
@@ -136,7 +138,7 @@ Organizer: {meeting.get('created_by_name', 'Unknown')}
 {meeting.get('description', '')}
 
 View meeting details and RSVP:
-http://localhost:9000/meetings/{meeting['id']}
+http://{os.getenv('HOST_IP', 'localhost')}:{os.getenv('SERVER_PORT', '9000')}/meetings/{meeting['id']}
 
 Best regards,
 {lab_name}
@@ -155,7 +157,7 @@ Best regards,
         {f'<p><strong>Description:</strong> {meeting.get("description", "")}</p>' if meeting.get('description') else ''}
     </div>
     <p>
-        <a href="http://localhost:9000/meetings/{meeting['id']}" 
+        <a href="http://{os.getenv('HOST_IP', 'localhost')}:{os.getenv('SERVER_PORT', '9000')}/meetings/{meeting['id']}" 
            style="background-color: #8B4513; color: white; padding: 12px 30px; 
                   text-decoration: none; border-radius: 4px; display: inline-block;">
             View Meeting & RSVP
@@ -204,7 +206,7 @@ def send_meeting_update_notification(meeting, recipients):
         <p><strong>Organizer:</strong> {meeting.get('created_by_name', 'Unknown')}</p>
     </div>
     <p>
-        <a href="http://localhost:9000/meetings/{meeting['id']}" 
+        <a href="http://{os.getenv('HOST_IP', 'localhost')}:{os.getenv('SERVER_PORT', '9000')}/meetings/{meeting['id']}" 
            style="background-color: #8B4513; color: white; padding: 12px 30px; 
                   text-decoration: none; border-radius: 4px; display: inline-block;">
             View Updated Meeting
@@ -246,7 +248,7 @@ Content: {content['title']}
 Uploaded by: {content.get('uploaded_by_name', 'Unknown')}
 
 View and download:
-http://localhost:9000/meetings/{meeting['id']}
+http://{os.getenv('HOST_IP', 'localhost')}:{os.getenv('SERVER_PORT', '9000')}/meetings/{meeting['id']}
 
 Best regards,
 {lab_name}
@@ -264,7 +266,7 @@ Best regards,
         {f'<p><strong>Description:</strong> {content.get("description", "")}</p>' if content.get('description') else ''}
     </div>
     <p>
-        <a href="http://localhost:9000/meetings/{meeting['id']}" 
+        <a href="http://{os.getenv('HOST_IP', 'localhost')}:{os.getenv('SERVER_PORT', '9000')}/meetings/{meeting['id']}" 
            style="background-color: #8B4513; color: white; padding: 12px 30px; 
                   text-decoration: none; border-radius: 4px; display: inline-block;">
             View & Download
@@ -348,7 +350,9 @@ def update_user_profile(user_id, name, new_email):
         if new_email and new_email != current_user['email']:
             # Create verification token
             token = create_password_reset_token(user_id)
-            verification_link = f"http://localhost:9000/verify-email/{token}?email={new_email}"
+            host = os.getenv('HOST_IP', 'localhost')
+            port = os.getenv('SERVER_PORT', '9000')
+            verification_link = f"http://{host}:{port}/verify-email/{token}?email={new_email}"
             
             # Send verification email to NEW email
             send_email_verification(new_email, name, verification_link)

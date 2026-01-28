@@ -1,4 +1,4 @@
-from lib.data import get_db, query_db, execute_db
+from labman.lib.data import get_db, query_db, execute_db
 from datetime import datetime
 import calendar
 
@@ -13,8 +13,8 @@ def create_meeting(title, description, meeting_time, created_by, group_id=None, 
         meeting_id = cursor.lastrowid
         
         # Send notifications to Airex Lab group members
-        from lib.users import send_meeting_notification
-        from lib.groups import get_group_members
+        from labman.lib.users import send_meeting_notification
+        from labman.lib.groups import get_group_members
         
         airex_group = query_db('SELECT id FROM research_groups WHERE name = ?', ['Airex Lab'], one=True)
         if airex_group:
@@ -125,8 +125,8 @@ def update_meeting(meeting_id, title, description, meeting_time, group_id=None, 
         
         # Send notification if time changed
         if send_notification:
-            from lib.users import send_meeting_update_notification
-            from lib.groups import get_group_members
+            from labman.lib.users import send_meeting_update_notification
+            from labman.lib.groups import get_group_members
             
             meeting = get_meeting_by_id(meeting_id)
             airex_group = query_db('SELECT id FROM research_groups WHERE name = ?', ['Airex Lab'], one=True)

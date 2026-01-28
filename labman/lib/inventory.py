@@ -1,4 +1,4 @@
-from lib.data import get_db, query_db, execute_db
+from labman.lib.data import get_db, query_db, execute_db
 from datetime import datetime
 
 def add_inventory_item(name, description, quantity, location):

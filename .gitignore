@@ -12,4 +12,6 @@ wheels/
 
 # App Data
 uploads/
-*.db
+data/
+logs/
+backup/

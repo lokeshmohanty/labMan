@@ -1,4 +1,4 @@
-from lib.data import query_db, execute_db
+from labman.lib.data import query_db, execute_db
 from datetime import datetime
 
 def get_research_plan(user_id):
@@ -16,7 +16,7 @@ def get_research_plan(user_id):
     tasks_list = [dict(task) for task in tasks]
     
     # Get related documents
-    from lib.content import get_content
+    from labman.lib.content import get_content
     documents = get_content(research_plan_id=user_id)
     
     # Calculate date range

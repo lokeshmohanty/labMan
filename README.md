@@ -1,233 +1,143 @@
-# Lab Management System
+# Lab Management System (labman)
 
-A bare-bones lab management system for an academic lab.
-
-## Quick Links
-
-- 📖 **[User Guide](USAGE.md)** - Complete guide for end users
-
-## Overview
-
-This Lab Management System is a web-based application designed to streamline lab operations including member management, research group organization, meeting scheduling, content sharing, and inventory tracking.
-
-### Key Features
-
-- **User Management**: Two-level access control (Admin/User) with secure authentication
-- **Password Management**: Self-service password reset via email, admin override capability
-- **Research Groups**: Hierarchical group structure for organizing research teams
-- **Meeting Management**: Schedule meetings with calendar view, RSVP functionality, and email notifications
-- **Content Library**: Upload and share files with granular access control and public share links
-- **Lab Inventory**: Track equipment and manage lab servers
-- **Email Notifications**: Automated notifications for meetings and content updates
-- **Mobile Responsive**: Full functionality on desktop, tablet, and mobile devices
-
-## Quick Start
-
-### Prerequisites
-- Python 3.10 or higher
-- [uv](https://github.com/astral-sh/uv) package manager
-
-### Installation
-
-1. Install uv (if not already installed)
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-2. Create virtual environment and install dependencies
-```bash
-uv sync
-```
-
-3. Set environment variables
-```bash
-# .env file
-FLASK_SECRET_KEY=your-secret-key
-SMTP_SERVER=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USERNAME=your-email
-SMTP_PASSWORD=your-password
-SENDER_EMAIL=sender@domain.com
-DEFAULT_MEETING_TAGS=Research Discussion,Progress Update
-```
-
-4. Run application
-```bash
-uv run app.py
-```
-
-5. Access via browser at <http://localhost:9000>
-
-### Default Login
-- **Email**: admin@demo.lab (your smtp_username from .env)
-- **Password**: admin123
-- ⚠️ **Change this immediately after first login!**
-
-## Configuration
-
-### Server Settings
-Edit `app.py` to change host and port:
-```python
-app.run(host='localhost', port=9000, debug=False)
-```
-
-### Email Setup (Required for Notifications)
-
-The system is **pre-configured** to use `admin@demo.lab`. You only need to:
-
-**1. Generate Gmail App Password:**
-- Go to https://myaccount.google.com (sign in as admin@demo.lab)
-- Security → 2-Step Verification (enable if needed)
-- Security → App passwords → Generate for "Mail"
-- Copy the 16-character password
-
-**2. Update .env:**
-```python
-SMTP_PASSWORD = 'abcdefghijklmnop'  # Replace with your actual 16-char password
-```
-
-**3. Test (optional):**
-```bash
-python test_email.py
-```
-
-**4. Replace login message (optional):**
-- Edit `templates/login.html` to change the login message. It currently displays a 
-  link to this repository. You can either remove it or replace it with something like your lab website.
-
-## Documentation
-
-### For End Users
-- **[USAGE.md](USAGE.md)** - Complete user guide covering:
-  - Getting started and first login
-  - Dashboard and navigation
-  - Profile management
-  - Using all features (meetings, content, inventory, etc.)
-  - Mobile access
-  - Troubleshooting and FAQs
-
-## Features Overview
-
-### Authentication & Authorization
-- Secure login with session management
-- Password hashing using Werkzeug PBKDF2
-- Two roles: Admin (full access) and User (limited access)
-- Self-service password reset via email
-- Admin can reset any user's password
-
-### Research Groups
-- Create hierarchical group structures
-- Default "airex" group for all members
-- Assign members to multiple groups
-- Group-based content access control
-
-### Meeting Management
-- Schedule meetings with date/time
-- Assign to research groups
-- Tag meetings (Knowledge Session, Research Discussion, Progress Update)
-- Interactive monthly calendar view
-- RSVP functionality (Join/Can't Join)
-- Email notifications to airex group members
-- Upload and download meeting materials
-- Filter meetings by tags
-
-### Content Library
-- Upload files up to 100MB
-- Support for multiple file types (documents, images, code, etc.)
-- Group-level access control
-- Public share links for external sharing
-- Associate content with meetings
-- Filter content by group
-- Download files
-
-### Lab Inventory
-- Track equipment with quantity and location
-- Stock level indicators (low/medium/high)
-- Server management (IP, hostname, admin, location)
-- Admin-only editing
-
-### Notifications
-- Email notifications for new meetings
-- Notifications for meeting content uploads
-- User-controlled notification preferences
-- Password reset emails
+An opinionated lab management system for academic labs, now available as a CLI tool.
 
 ## Directory Structure
+- `labman/`: Main package directory
+    - `lib/`: Backend modules
+    - `templates/`: HTML templates
+    - `static/`: Static assets
+    - `server.py`: Flask application
+    - `cli.py`: CLI entry point
 
-```
-lab-manager/
-├── app.py                          # Main Flask application
-├── requirements.txt                # Python dependencies
-├── lib/                           # Backend modules
-│   ├── __init__.py
-│   ├── data.py                    # Database management
-│   ├── auth.py                    # Authentication
-│   ├── users.py                   # User management & email
-│   ├── groups.py                  # Research groups
-│   ├── meetings.py                # Meeting management
-│   ├── content.py                 # Content management
-│   └── inventory.py               # Inventory & servers
-├── templates/                     # HTML templates
-│   ├── base.html                  # Base layout
-│   ├── login.html                 # Login page
-│   ├── dashboard.html             # Dashboard
-│   ├── [feature]*.html            # Feature templates
-│   └── ...
-├── uploads/                       # File storage
-└── demo_lab.db                  # SQLite database
-```
+## Installation
 
-## User Roles
+### Prerequisites
+- Python 3.10+
+- `uv` (recommended) or `pip`
 
-### Administrator
-- Full system access
-- Create, edit, delete users
-- Reset any user's password
-- Manage research groups
-- Edit all content and meetings
-- Manage inventory and servers
-- All user capabilities
-
-### User
-- View all content with access permissions
-- Change own password
-- Request password reset via email
-- Upload content to assigned groups
-- Schedule meetings for their groups
-- Download accessible files
-- RSVP to meetings
-- View inventory (read-only)
-- Control notification preferences
-
-## Security Features
-
-- Password hashing (PBKDF2 with SHA-256)
-- Secure session management
-- CSRF protection
-- SQL injection prevention via parameterized queries
-- File upload validation
-- Access control checks
-- Password reset tokens (24-hour expiry)
-- STARTTLS email encryption
-
-## Backup and Maintenance
-
-### Database Backup
+### Install from source
 ```bash
-# Manual backup
-cp demo_lab.db demo_lab_backup_$(date +%Y%m%d).db
-
-# Automated backup (add to crontab)
-0 2 * * * /path/to/backup_script.sh
+git clone https://github.com/lokeshmohanty/labman.git
+cd labman
+uv pip install -e .
 ```
 
-## Production Deployment
+## Usage
 
-For production: **Use WSGI server** (Gunicorn):
-   ```bash
-   uv rungunicorn -w 4 -b localhost:9000 app:app
-   ```
+### 1. Initialize Configuration
 
-## License
+Run this command to create the `.env` configuration file interactively:
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+```bash
+labman init
+```
+
+This will ask for:
+- Lab Name
+- Network Config (`HOST_IP`, `SERVER_PORT`, `ALLOWED_HOSTS`)
+- SMTP settings
+
+### 2. Start the Server
+
+**Development mode** (default):
+
+```bash
+labman serve
+# OR
+labman serve dev
+```
+
+Starts Flask development server.
+
+**Production mode**:
+
+```bash
+labman serve prod
+# OR
+labman serve prod --host 0.0.0.0 --port 9000
+```
+
+- Starts `gunicorn` in daemon mode (background).
+- Logs output to `logs/YYYY-MM-DD.log`.
+
+**Check Status**:
+```bash
+labman status
+```
+- Shows if the server is running (PID) and the latest log entry.
+
+**Stop Production Server**:
+
+```bash
+labman serve stop
+```
+- Stops the running gunicorn process (using `gunicorn.pid` or matching process name).
+
+### 3. Management Commands
+
+**View Logs**:
+
+```bash
+labman log
+```
+
+Shows the latest log file and follows it (`tail -f`).
+
+**Backup Database**:
+
+```bash
+labman backup
+# OR
+labman backup now
+```
+
+Creates a copy of the database in `backup/YYYY-MM-DD.db`.
+
+**Automated Backup**:
+
+```bash
+labman backup auto daily
+# Options: daily, weekly, monthly
+```
+Sets up a cron job to backup the database automatically.
+
+**Stop Automated Backup**:
+```bash
+labman backup stop
+```
+Removes the automated backup cron job.
+
+### 4. Access the Application
+
+Open your browser at `http://<HOST_IP>:<SERVER_PORT>` (default: `http://localhost:9000`).
+
+Default Login (first run):
+- Email: Checks `.env` SMTP_USERNAME or `admin@example.com`
+- Password: `admin123` (Change immediately!)
+
+## Features
+- **User Management**: Admin/User roles, secure auth.
+- **Research Groups**: Hierarchical organization.
+- **Meeting Management**: Scheduling, RSVP, notifications.
+- **Content Library**: File sharing with access control.
+- **Inventory**: Equipment tracking.
+- **CLI Tools**: Built-in server management, logging, and backup.
+
+## Testing
+Run included tests and utilities:
+```bash
+# Test Email Configuration
+labman test email
+
+# Populate Test Data
+labman test data
+
+# Clear Test Data
+labman test clear
+```
+
+## Development
+To contribute:
+1. Install in editable mode: `uv pip install -e .`
+2. Run tests: `pytest`
