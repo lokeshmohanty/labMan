@@ -59,17 +59,18 @@ def upload_content(file, title, description, uploaded_by, group_id=None, meeting
         # Send notification if uploaded to a meeting
         if meeting_id:
             from labman.lib.meetings import get_meeting_by_id
-            from labman.lib.email_service import send_content_notification
+            from labman.lib.email_service import send_content_bulk_notification
+            from labman.lib.users import get_user_by_id
             
             meeting = get_meeting_by_id(meeting_id)
             content_item = get_content_by_id(content_id)
+            uploader = get_user_by_id(uploaded_by)
             
-            if meeting and content_item:
+            if meeting and content_item and uploader:
                 members = get_lab_members()
                 if members:
-                    # Queue content notifications in background
-                    for member in members:
-                        email_queue.enqueue(send_content_notification, recipient=member, meeting=meeting, content=content_item)
+                    # Queue bulk content notification
+                    email_queue.enqueue(send_content_bulk_notification, uploader=uploader, recipients=members, meeting=meeting, content=content_item)
         
         return True
     except Exception as e:

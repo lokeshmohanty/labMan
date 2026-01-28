@@ -15,15 +15,16 @@ def create_meeting(title, description, meeting_time, created_by, group_id=None, 
         meeting_id = cursor.lastrowid
         
         # Send notifications to Lab group members in background
-        from labman.lib.email_service import send_meeting_notification
+        from labman.lib.email_service import send_meeting_bulk_notification
+        from labman.lib.users import get_user_by_id
         
         members = get_lab_members()
         meeting = get_meeting_by_id(meeting_id)
+        creator = get_user_by_id(created_by)
         
-        if meeting and members:
-            # Queue notifications in background
-            for member in members:
-                email_queue.enqueue(send_meeting_notification, recipient=member, meeting=meeting)
+        if meeting and members and creator:
+            # Queue bulk notification
+            email_queue.enqueue(send_meeting_bulk_notification, creator=creator, recipients=members, meeting=meeting)
         
         return True
     except Exception as e:
@@ -128,18 +129,20 @@ def update_meeting(meeting_id, title, description, meeting_time, group_id=None, 
         
         # Send notification if time changed
         if send_notification:
-            from labman.lib.email_service import send_meeting_update_notification
+            from labman.lib.email_service import send_meeting_update_bulk_notification
+            from labman.lib.users import get_user_by_id
             
             meeting = get_meeting_by_id(meeting_id)
             if not meeting:
                 print(f"Meeting {meeting_id} not found for notification")
                 return True  # Update succeeded, just skip notification
             
+            creator = get_user_by_id(meeting['created_by'])
             members = get_lab_members()
-            if members:
-                # Queue update notifications in background
-                for member in members:
-                    email_queue.enqueue(send_meeting_update_notification, recipient=member, meeting=meeting)
+            
+            if members and creator:
+                # Queue bulk update notification
+                email_queue.enqueue(send_meeting_update_bulk_notification, creator=creator, recipients=members, meeting=meeting)
         
         return True
     except Exception as e:

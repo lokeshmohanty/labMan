@@ -85,7 +85,7 @@ def _log_email_failure(func_name: str, error: str, args: tuple, kwargs: dict):
         logger.error(f"Failed to log email failure: {e}")
 
 
-def _send_email(to_email: str, subject: str, text_body: str, html_body: str) -> bool:
+def _send_email(to_email: str, subject: str, text_body: str, html_body: str, cc_emails: Optional[List[str]] = None) -> bool:
     """
     Internal function to send email via SMTP.
     
@@ -94,6 +94,7 @@ def _send_email(to_email: str, subject: str, text_body: str, html_body: str) -> 
         subject: Email subject
         text_body: Plain text email body
         html_body: HTML email body
+        cc_emails: Optional list of CC recipient email addresses
         
     Returns:
         bool: True if email sent successfully, False otherwise
@@ -110,6 +111,11 @@ def _send_email(to_email: str, subject: str, text_body: str, html_body: str) -> 
         msg['From'] = config['sender_email']
         msg['To'] = to_email
         
+        all_recipients = [to_email]
+        if cc_emails:
+            msg['Cc'] = ', '.join(cc_emails)
+            all_recipients.extend(cc_emails)
+        
         # Attach both plain text and HTML versions
         part1 = MIMEText(text_body, 'plain')
         part2 = MIMEText(html_body, 'html')
@@ -122,7 +128,7 @@ def _send_email(to_email: str, subject: str, text_body: str, html_body: str) -> 
             server.login(config['username'], config['password'])
             server.send_message(msg)
         
-        logger.info(f"Email sent successfully to {to_email}")
+        logger.info(f"Email sent successfully to {to_email} (CC: {cc_emails})")
         return True
         
     except Exception as e:
@@ -492,3 +498,36 @@ def send_content_notification(recipient: Dict, meeting: Dict, content: Dict) -> 
     text, html = _render_email_template('content_notification', recipient=recipient, meeting=meeting, content=content)
     subject = f'New Content: {content["title"]}'
     return _send_email(recipient['email'], subject, text, html)
+
+
+@retry_on_failure(max_attempts=2, delay=2)
+def send_meeting_bulk_notification(creator: Dict, recipients: List[Dict], meeting: Dict) -> bool:
+    """Send meeting notification email to creator (TO) and members (CC)"""
+    cc_emails = [r['email'] for r in recipients if r.get('email_notifications', True) and r['id'] != creator['id']]
+    
+    text, html = _render_email_template('meeting_notification', recipient=creator, meeting=meeting)
+    subject = f'New Meeting: {meeting["title"]}'
+    
+    return _send_email(creator['email'], subject, text, html, cc_emails=cc_emails)
+
+
+@retry_on_failure(max_attempts=2, delay=2)
+def send_meeting_update_bulk_notification(creator: Dict, recipients: List[Dict], meeting: Dict) -> bool:
+    """Send meeting update notification to creator (TO) and members (CC)"""
+    cc_emails = [r['email'] for r in recipients if r.get('email_notifications', True) and r['id'] != creator['id']]
+    
+    text, html = _render_email_template('meeting_update', recipient=creator, meeting=meeting)
+    subject = f'Meeting Updated: {meeting["title"]}'
+    
+    return _send_email(creator['email'], subject, text, html, cc_emails=cc_emails)
+
+
+@retry_on_failure(max_attempts=2, delay=2)
+def send_content_bulk_notification(uploader: Dict, recipients: List[Dict], meeting: Dict, content: Dict) -> bool:
+    """Send content notification to uploader (TO) and members (CC)"""
+    cc_emails = [r['email'] for r in recipients if r.get('email_notifications', True) and r['id'] != uploader['id']]
+    
+    text, html = _render_email_template('content_notification', recipient=uploader, meeting=meeting, content=content)
+    subject = f'New Content: {content["title"]}'
+    
+    return _send_email(uploader['email'], subject, text, html, cc_emails=cc_emails)
