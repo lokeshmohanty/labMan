@@ -105,12 +105,14 @@ def init_db():
             uploaded_by INTEGER NOT NULL,
             group_id INTEGER,
             meeting_id INTEGER,
+            research_plan_id INTEGER,  -- Linked to research_plans
             access_level TEXT DEFAULT 'group',
             share_link TEXT UNIQUE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (uploaded_by) REFERENCES users(id),
             FOREIGN KEY (group_id) REFERENCES research_groups(id),
-            FOREIGN KEY (meeting_id) REFERENCES meetings(id)
+            FOREIGN KEY (meeting_id) REFERENCES meetings(id),
+            FOREIGN KEY (research_plan_id) REFERENCES research_plans(user_id)
         )
     ''')
     
@@ -138,6 +140,36 @@ def init_db():
             description TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Research Plans table
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS research_plans (
+            user_id INTEGER PRIMARY KEY,
+            problem_statement TEXT,
+            research_progress TEXT,  -- New field
+            github_link TEXT,
+            manuscript_link TEXT,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            start_date DATE,
+            end_date DATE,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    ''')
+    
+    # Research Tasks table
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS research_tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            task_name TEXT NOT NULL,
+            due_date DATE,
+            start_date DATE,
+            previous_due_date DATE,
+            status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     ''')
     

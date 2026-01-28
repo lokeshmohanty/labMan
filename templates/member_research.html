@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}{{ target_user.name }}'s Research - {{ lab_name }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="margin-bottom: 2rem;">
+        <a href="{{ url_for('research') }}" style="color: var(--primary); text-decoration: none;">
+            ← Back to Research Groups
+        </a>
+    </div>
+
+    <h1 style="color: var(--primary); margin-bottom: 0.5rem;">{{ target_user.name }}'s Research Project</h1>
+    <p style="color: var(--text-light);">{{ target_user.email }}</p>
+
+    <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+        {% if plan.github_link %}
+        <a href="{{ plan.github_link }}" target="_blank" class="btn btn-secondary-light"
+            style="display: inline-block; width: auto; font-size: 0.9rem;">
+            GitHub Repository
+        </a>
+        {% endif %}
+        {% if plan.manuscript_link %}
+        <a href="{{ plan.manuscript_link }}" target="_blank" class="btn btn-secondary-light"
+            style="display: inline-block; width: auto; font-size: 0.9rem;">
+            Research Manuscript
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="grid grid-2">
+        <!-- Research Problem -->
+        <div>
+            <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+            <h3 style="color: var(--text-dark); margin-bottom: 0.5rem;">Research Problem</h3>
+            <div id="problem-content"
+                style="background-color: white; padding: 1.5rem; border-radius: 4px; border: 1px solid var(--border); min-height: 200px;">
+            </div>
+
+            <h3 style="color: var(--text-dark); margin-bottom: 0.5rem; margin-top: 2rem;">Research Progress</h3>
+            <div id="progress-content"
+                style="background-color: white; padding: 1.5rem; border-radius: 4px; border: 1px solid var(--border); min-height: 300px;">
+            </div>
+
+            <h3 style="color: var(--text-dark); margin-bottom: 0.5rem; margin-top: 2rem;">Related Documents</h3>
+            {% if plan.documents %}
+            <ul style="list-style: none; padding: 0;">
+                {% for doc in plan.documents %}
+                <li style="padding: 0.5rem; border-bottom: 1px solid var(--border);">
+                    <a href="{{ url_for('download_content', content_id=doc.id) }}" target="_blank"
+                        style="color: var(--primary); text-decoration: none; font-weight: bold;">
+                        {{ doc.title }}
+                    </a>
+                    <div style="font-size: 0.8rem; color: var(--text-light);">{{ doc.filename }}</div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p style="color: var(--text-light); font-size: 0.9rem;">No documents uploaded.</p>
+            {% endif %}
+
+            <script>
+                document.getElementById('problem-content').innerHTML = marked.parse(`{{ plan.problem_statement }}` || '*No research problem defined yet.*');
+                document.getElementById('progress-content').innerHTML = marked.parse(`{{ plan.research_progress }}` || '*No progress updates yet.*');
+            </script>
+        </div>
+
+        <!-- Tasks Timeline -->
+        <div>
+            <h3 style="color: var(--text-dark); margin-bottom: 0.5rem;">Tasks Timeline</h3>
+
+            {% if plan.tasks %}
+
+            {# Use timeline_start/end passed from backend if available, else default #}
+            {% set start_date = timeline_start or plan.start_date %}
+            {% set end_date = timeline_end or plan.end_date %}
+
+            {% if start_date and end_date %}
+
+            <div class="gantt-chart">
+                <div class="gantt-header">
+                    <span>{{ start_date }}</span>
+                    <span>{{ end_date }}</span>
+                </div>
+                {% set max_days = end_date|date_diff(start_date) %}
+
+                {% for t in plan.tasks %}
+                <!-- Determine bar start and width -->
+                {% set t_start = t.start_date[:10] if t.start_date else (t.created_at[:10] if t.created_at else
+                start_date) %}
+                {% set t_end = t.due_date if t.due_date else end_date %}
+
+                <!-- Calculate offsets -->
+                {% set start_offset = t_start|date_diff(start_date) %}
+                {% set duration = t_end|date_diff(t_start) %}
+
+                <!-- Normalize percentages -->
+                {% set left_pct = (start_offset / max_days) * 100 %}
+                {% set width_pct = (duration / max_days) * 100 %}
+
+                <!-- Clamp visual range -->
+                {% if (left_pct + width_pct) > 0 and left_pct < 100 %} <div class="gantt-row">
+                    {% if left_pct < 0 %} {% set width_pct=width_pct + left_pct %} {% set left_pct=0 %} {% endif %} {%
+                        if (left_pct + width_pct)> 100 %}
+                        {% set width_pct = 100 - left_pct %}
+                        {% endif %}
+
+                        <div class="gantt-bar {% if t.status == 'pending' %}gantt-pending{% elif t.status == 'in_progress' %}gantt-in-progress{% else %}gantt-completed{% endif %}"
+                            style="left: {{ left_pct }}%; width: {{ width_pct }}%;" data-task-name="{{ t.task_name }}"
+                            data-status="{{ t.status|replace('_', ' ')|capitalize }}" data-start="{{ t_start }}"
+                            data-end="{{ t_end }}">
+                            {{ t.task_name }}
+                        </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <ul style="list-style: none; padding: 0;">
+            {% for task in plan.tasks %}
+            <li
+                style="background-color: var(--bg-light); padding: 0.75rem; border-radius: 4px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div
+                        style="font-weight: bold; {% if task.status == 'completed' %}text-decoration: line-through; color: var(--text-light);{% endif %}">
+                        {{ task.task_name }}
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--text-light);">
+                        Start: {{ task.start_date or 'N/A' }} | Due: {{ task.due_date or 'No date' }}
+                        {% if task.previous_due_date %}
+                        <span class="previous-due-date">Previous Due: {{ task.previous_due_date }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    {% if task.status == 'pending' %}
+                    <span class="badge"
+                        style="background-color: var(--warning-light); color: var(--warning-text);">Pending</span>
+                    {% elif task.status == 'in_progress' %}
+                    <span class="badge" style="background-color: var(--info-light); color: var(--info-text);">In
+                        Progress</span>
+                    {% elif task.status == 'completed' %}
+                    <span class="badge"
+                        style="background-color: var(--success-light); color: var(--success-text);">Completed</span>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p style="color: var(--text-light);">No tasks added yet.</p>
+        {% endif %}
+    </div>
+</div>
+</div>
+{% endblock %}

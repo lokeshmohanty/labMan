@@ -157,3 +157,42 @@ def get_group_hierarchy(group_id):
             break
     
     return hierarchy
+
+def get_research_tree():
+    """Get hierarchy of groups with members"""
+    groups = get_all_groups()
+    
+    # Get all members for all groups
+    all_members = query_db('''
+        SELECT ug.group_id, u.id, u.name, u.email, u.is_admin, ug.joined_at
+        FROM users u
+        INNER JOIN user_groups ug ON u.id = ug.user_id
+        ORDER BY u.name
+    ''')
+    
+    members_by_group = {}
+    for m in all_members:
+        gid = m['group_id']
+        if gid not in members_by_group:
+            members_by_group[gid] = []
+        members_by_group[gid].append({
+            'id': m['id'], 'name': m['name'], 'email': m['email'], 
+            'is_admin': m['is_admin'], 'joined_at': m['joined_at']
+        })
+        
+    # Build tree
+    groups_map = {}
+    for g in groups:
+        g_dict = dict(g)
+        g_dict['members'] = members_by_group.get(g['id'], [])
+        g_dict['subgroups'] = []
+        groups_map[g['id']] = g_dict
+        
+    roots = []
+    for g_id, g in groups_map.items():
+        if g['parent_id'] and g['parent_id'] in groups_map:
+            groups_map[g['parent_id']]['subgroups'].append(g)
+        else:
+            roots.append(g)
+            
+    return roots

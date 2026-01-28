@@ -5,7 +5,7 @@
 {% block content %}
 <div class="card">
     <h1 style="color: var(--primary); margin-bottom: 0.5rem;">Welcome, {{ user.name }}!</h1>
-    <p style="color: var(--text-light);">{{ user.email }} 
+    <p style="color: var(--text-light);">{{ user.email }}
         {% if user.is_admin %}
         <span class="badge badge-admin">Admin</span>
         {% else %}
@@ -25,15 +25,15 @@
             {% endif %}
         </div>
     </div>
-    
+
     <div class="card">
         <h3 style="color: var(--primary); margin-bottom: 1rem;">My Groups</h3>
         {% if groups %}
         <ul style="list-style: none;">
             {% for group in groups %}
             <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border);">
-                <a href="{{ url_for('group_detail', group_id=group.id) }}" 
-                   style="color: var(--text-dark); text-decoration: none;">
+                <a href="{{ url_for('group_detail', group_id=group.id) }}"
+                    style="color: var(--text-dark); text-decoration: none;">
                     {{ group.name }}
                 </a>
             </li>
@@ -43,15 +43,15 @@
         <p style="color: var(--text-light);">You are not part of any groups yet.</p>
         {% endif %}
     </div>
-    
+
     <div class="card">
         <h3 style="color: var(--primary); margin-bottom: 1rem;">Recent Meetings</h3>
         {% if meetings %}
         <ul style="list-style: none;">
             {% for meeting in meetings %}
             <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border);">
-                <a href="{{ url_for('meeting_detail', meeting_id=meeting.id) }}" 
-                   style="color: var(--text-dark); text-decoration: none;">
+                <a href="{{ url_for('meeting_detail', meeting_id=meeting.id) }}"
+                    style="color: var(--text-dark); text-decoration: none;">
                     <strong>{{ meeting.title }}</strong><br>
                     <small style="color: var(--text-light);">
                         {{ meeting.meeting_time }}
@@ -67,6 +67,307 @@
             View all meetings →
         </a>
     </div>
+</div>
+
+<div class="card">
+    <h2 style="color: var(--primary); margin-bottom: 1rem;">My Research Project Plan</h2>
+
+    <div class="grid grid-2">
+        <!-- Research Problem -->
+        <div>
+            <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <h3 style="color: var(--text-dark); margin: 0;">Research Problem</h3>
+                <div id="problem-actions">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleEdit('problem')"
+                        id="problem-edit-btn">Edit</button>
+                    <div id="problem-controls" style="display: none;">
+                        <button type="button" class="btn btn-secondary btn-sm"
+                            onclick="cancelEdit('problem')">Cancel</button>
+                        <button type="button" class="btn btn-primary btn-sm"
+                            onclick="submitForm('problem')">Update</button>
+                    </div>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('update_research_problem_route') }}" id="problem-form">
+                <div id="problem-viewer"
+                    style="padding: 1.5rem; border: 1px solid var(--border); border-radius: 4px; background: white; min-height: 200px; margin-bottom: 1rem;">
+                    <!-- Content rendered via JS -->
+                </div>
+
+                <div id="problem-editor" style="display: none; margin-bottom: 1rem;">
+                    <div class="form-group">
+                        <textarea name="problem_statement" id="problem_statement" class="form-control" rows="12"
+                            placeholder="Describe your research problem (Markdown supported)...">{{ research_plan.problem_statement }}</textarea>
+                    </div>
+                </div>
+            </form>
+
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; margin-top: 2rem;">
+                <h3 style="color: var(--text-dark); margin: 0;">Research Progress</h3>
+                <div id="progress-actions">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleEdit('progress')"
+                        id="progress-edit-btn">Edit</button>
+                    <div id="progress-controls" style="display: none;">
+                        <button type="button" class="btn btn-secondary btn-sm"
+                            onclick="cancelEdit('progress')">Cancel</button>
+                        <button type="button" class="btn btn-primary btn-sm"
+                            onclick="submitForm('progress')">Update</button>
+                    </div>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('update_research_problem_route') }}" id="progress-form">
+                <div id="progress-viewer"
+                    style="padding: 1.5rem; border: 1px solid var(--border); border-radius: 4px; background: white; min-height: 300px; margin-bottom: 1rem;">
+                    <!-- Content rendered via JS -->
+                </div>
+
+                <div id="progress-editor" style="display: none; margin-bottom: 1rem;">
+                    <div class="form-group">
+                        <textarea name="research_progress" id="research_progress" class="form-control" rows="12"
+                            placeholder="Track your progress here (Markdown supported)...">{{ research_plan.research_progress }}</textarea>
+                    </div>
+                </div>
+            </form>
+
+            <script>
+                // Initial Render
+                document.addEventListener('DOMContentLoaded', () => {
+                    const problemText = document.getElementById('problem_statement').value;
+                    const progressText = document.getElementById('research_progress').value;
+
+                    document.getElementById('problem-viewer').innerHTML = marked.parse(problemText || '*No content*');
+                    document.getElementById('progress-viewer').innerHTML = marked.parse(progressText || '*No content*');
+                });
+
+                function toggleEdit(section) {
+                    // Show editor, hide viewer
+                    document.getElementById(section + '-viewer').style.display = 'none';
+                    document.getElementById(section + '-editor').style.display = 'block';
+
+                    // Toggle buttons in header
+                    document.getElementById(section + '-edit-btn').style.display = 'none';
+                    document.getElementById(section + '-controls').style.display = 'inline-block';
+                }
+
+                function cancelEdit(section) {
+                    // Hide editor, show viewer
+                    document.getElementById(section + '-viewer').style.display = 'block';
+                    document.getElementById(section + '-editor').style.display = 'none';
+
+                    // Toggle buttons in header
+                    document.getElementById(section + '-edit-btn').style.display = 'inline-block';
+                    document.getElementById(section + '-controls').style.display = 'none';
+                }
+
+                function submitForm(section) {
+                    document.getElementById(section + '-form').submit();
+                }
+            </script>
+
+            <div style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                <h3 style="color: var(--text-dark); margin-bottom: 0.5rem;">Related Research Documents</h3>
+                <div style="margin-bottom: 1rem;">
+                    {% if research_plan.documents %}
+                    <ul style="list-style: none; padding: 0;">
+                        {% for doc in research_plan.documents %}
+                        <li
+                            style="padding: 0.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <a href="{{ url_for('download_content', content_id=doc.id) }}" target="_blank"
+                                    style="color: var(--primary); text-decoration: none; font-weight: bold;">
+                                    {{ doc.title }}
+                                </a>
+                                <div style="font-size: 0.8rem; color: var(--text-light);">{{ doc.filename }}</div>
+                            </div>
+                            <form method="POST" action="{{ url_for('delete_content_route', content_id=doc.id) }}"
+                                onsubmit="return confirm('Delete this document?');">
+                                <button type="submit" class="btn btn-danger btn-sm"
+                                    style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">
+                                    Delete
+                                </button>
+                            </form>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p style="color: var(--text-light); font-size: 0.9rem;">No documents uploaded.</p>
+                    {% endif %}
+                </div>
+
+                <form method="POST" action="{{ url_for('upload_research_document_route') }}"
+                    enctype="multipart/form-data"
+                    style="background: var(--bg-light); padding: 1rem; border-radius: 4px;">
+                    <div class="form-group">
+                        <input type="text" name="title" class="form-control"
+                            placeholder="Document Title (e.g. Initial Proposal)" required
+                            style="margin-bottom: 0.5rem;">
+                    </div>
+                    <div class="form-group">
+                        <input type="file" name="file" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-secondary btn-sm">Upload Document</button>
+                </form>
+            </div>
+
+            <h3 style="color: var(--text-dark); margin-bottom: 0.5rem; margin-top: 2rem;">Project Links</h3>
+            <form method="POST" action="{{ url_for('update_research_links_route') }}">
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 0.25rem;">GitHub Repository</label>
+                    <input type="url" name="github_link" class="form-control" value="{{ research_plan.github_link }}"
+                        placeholder="https://github.com/...">
+                </div>
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 0.25rem;">Research Manuscript</label>
+                    <input type="url" name="manuscript_link" class="form-control"
+                        value="{{ research_plan.manuscript_link }}" placeholder="https://arxiv.org/...">
+                </div>
+                <button type="submit" class="btn btn-primary">Save Links</button>
+            </form>
+        </div>
+
+        <!-- Tasks Timeline -->
+        <div>
+            <h3 style="color: var(--text-dark); margin-bottom: 0.5rem;">Tasks Timeline</h3>
+
+            <form method="POST" action="{{ url_for('add_research_task_route') }}"
+                style="margin-bottom: 1rem; display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 0.5rem; align-items: end;">
+
+                <div style="display: flex; flex-direction: column;">
+                    <label style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 0.2rem;">Task Name</label>
+                    <input type="text" name="task_name" class="form-control" placeholder="New Task" required>
+                </div>
+
+                <div style="display: flex; flex-direction: column;">
+                    <label style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 0.2rem;">Start
+                        Date</label>
+                    <input type="date" name="start_date" class="form-control" required value="{{ current_date or '' }}">
+                </div>
+
+                <div style="display: flex; flex-direction: column;">
+                    <label style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 0.2rem;">Due Date</label>
+                    <input type="date" name="due_date" class="form-control">
+                </div>
+
+                <button type="submit" class="btn btn-secondary" style="height: 38px;">Add</button>
+            </form>
+
+            {% if research_plan.tasks %}
+
+            {% if research_plan.start_date and research_plan.end_date %}
+
+            <div class="gantt-chart">
+                <div class="gantt-header">
+                    <span>{{ timeline_start }}</span>
+                    <span>{{ timeline_end }}</span>
+                </div>
+
+                {% set start_date = timeline_start %}
+                {% set end_date = timeline_end %}
+                {% set max_days = end_date|date_diff(start_date) %}
+
+                {% for t in research_plan.tasks %}
+                <!-- Determine bar start and width -->
+                {% set t_start = t.start_date[:10] if t.start_date else (t.created_at[:10] if t.created_at else
+                start_date) %}
+                {% set t_end = t.due_date if t.due_date else end_date %}
+
+                <!-- Calculate offsets -->
+                {% set start_offset = t_start|date_diff(start_date) %}
+                {% set duration = t_end|date_diff(t_start) %}
+
+                <!-- If task is entirely before or after window, we might want to hide or clamp -->
+                <!-- For now, we clamp visually. Jinja logic to simple clamp percentages: -->
+
+                {% set left_pct = (start_offset / max_days) * 100 %}
+                {% set width_pct = (duration / max_days) * 100 %}
+
+                <!-- Hide if totally out of view (optional, but requested view restriction suggests we focus) -->
+                {% if (left_pct + width_pct) > 0 and left_pct < 100 %} <div class="gantt-row">
+                    <!-- Clamp left and width -->
+                    {% if left_pct < 0 %} {% set width_pct=width_pct + left_pct %} {% set left_pct=0 %} {% endif %} {%
+                        if (left_pct + width_pct)> 100 %}
+                        {% set width_pct = 100 - left_pct %}
+                        {% endif %}
+
+                        <div class="gantt-bar {% if t.status == 'pending' %}gantt-pending{% elif t.status == 'in_progress' %}gantt-in-progress{% else %}gantt-completed{% endif %}"
+                            style="left: {{ left_pct }}%; width: {{ width_pct }}%;" data-task-name="{{ t.task_name }}"
+                            data-status="{{ t.status|replace('_', ' ')|capitalize }}" data-start="{{ t_start }}"
+                            data-end="{{ t_end }}">
+                            {{ t.task_name }}
+                        </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <ul style="list-style: none; padding: 0; max-height: 400px; overflow-y: auto;">
+            {% for task in research_plan.tasks %}
+            <li
+                style="background-color: var(--bg-light); padding: 0.75rem; border-radius: 4px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div
+                        style="font-weight: bold; {% if task.status == 'completed' %}text-decoration: line-through; color: var(--text-light);{% endif %}">
+                        {{ task.task_name }}
+                    </div>
+                    <div
+                        style="font-size: 0.85rem; color: var(--text-light); display: flex; align-items: center; gap: 0.5rem;">
+                        <!-- Start Date Form -->
+                        <span style="display: flex; align-items: center; gap: 0.25rem;">
+                            <span>Start:</span>
+                            <form method="POST" action="{{ url_for('update_task_start_date_route', task_id=task.id) }}"
+                                style="display: inline;">
+                                <input type="date" name="start_date" value="{{ task.start_date or '' }}"
+                                    onchange="this.form.submit()"
+                                    style="padding: 0.1rem; border: 1px solid var(--border); border-radius: 3px; font-size: 0.8rem;">
+                            </form>
+                        </span>
+
+                        <span style="color: var(--border);">|</span>
+
+                        <!-- Due Date Form -->
+                        <span style="display: flex; align-items: center; gap: 0.25rem;">
+                            <span>Due:</span>
+                            <form method="POST" action="{{ url_for('update_task_date_route', task_id=task.id) }}"
+                                style="display: inline;">
+                                <input type="date" name="due_date" value="{{ task.due_date or '' }}"
+                                    onchange="this.form.submit()"
+                                    style="padding: 0.1rem; border: 1px solid var(--border); border-radius: 3px; font-size: 0.8rem;">
+                            </form>
+                        </span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.25rem; align-items: center;">
+                    <form method="POST" action="{{ url_for('update_research_task_route', task_id=task.id) }}">
+                        <select name="status" onchange="this.form.submit()"
+                            style="padding: 0.25rem; border-radius: 4px; border: 1px solid var(--border);">
+                            <option value="pending" {% if task.status=='pending' %}selected{% endif %}>Pending
+                            </option>
+                            <option value="in_progress" {% if task.status=='in_progress' %}selected{% endif %}>In
+                                Progress</option>
+                            <option value="completed" {% if task.status=='completed' %}selected{% endif %}>Completed
+                            </option>
+                        </select>
+                    </form>
+                    <form method="POST" action="{{ url_for('delete_research_task_route', task_id=task.id) }}"
+                        onsubmit="return confirm('Delete task?');" style="display: inline;">
+                        <button type="submit"
+                            style="background: none; border: none; color: var(--error); cursor: pointer; font-size: 1.2rem; line-height: 1;">&times;</button>
+                    </form>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p style="color: var(--text-light);">No tasks added yet.</p>
+        {% endif %}
+    </div>
+</div>
 </div>
 
 <div class="card">

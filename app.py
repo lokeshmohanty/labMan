@@ -10,7 +10,8 @@ from lib.meetings import create_meeting, get_all_meetings, update_meeting, delet
 from lib.content import upload_content, get_content, delete_content, get_content_by_id, check_content_access, get_content_by_share_link, get_content_by_group, update_content
 from lib.inventory import add_inventory_item, get_all_inventory, update_inventory_item, delete_inventory_item
 from lib.servers import add_server, get_all_servers, update_server, delete_server, get_server_by_id
-from datetime import datetime
+from lib.research import get_research_plan, update_research_problem, add_research_task, update_research_task_status, delete_research_task, get_task_by_id, update_research_links, update_task_due_date
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
 
@@ -28,7 +29,23 @@ with app.app_context():
 
 @app.context_processor
 def inject_lab_info():
-    return dict(lab_name=os.getenv('LAB_NAME', 'Lab Manager'))
+    return dict(lab_name=os.getenv('LAB_NAME', 'Lab Manager'), min=min, max=max)
+
+@app.template_filter('date_diff')
+def date_diff(d1, d2):
+    """Return difference in days between two date strings (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)"""
+    if not d1 or not d2:
+        return 0
+    try:
+        # Handle timestamps
+        if ' ' in str(d1): d1 = str(d1).split(' ')[0]
+        if ' ' in str(d2): d2 = str(d2).split(' ')[0]
+        
+        date1 = datetime.strptime(str(d1), '%Y-%m-%d')
+        date2 = datetime.strptime(str(d2), '%Y-%m-%d')
+        return (date1 - date2).days
+    except:
+        return 0
 
 @app.route('/')
 def index():
@@ -53,6 +70,56 @@ def login():
     
     return render_template('login.html')
 
+@app.route('/research/links', methods=['POST'])
+def update_research_links_route():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+        
+    github_link = request.form.get('github_link')
+    manuscript_link = request.form.get('manuscript_link')
+    
+    if update_research_links(session['user_id'], github_link, manuscript_link):
+        flash('Research links updated successfully!', 'success')
+    else:
+        flash('Error updating research links', 'danger')
+        
+    return redirect(url_for('dashboard'))
+
+@app.route('/research/task/<int:task_id>/update_date', methods=['POST'])
+def update_task_date_route(task_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    # Ownership check
+    task = get_task_by_id(task_id)
+    if not task or task['user_id'] != session['user_id']:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+    due_date = request.form.get('due_date')
+    if update_task_due_date(task_id, due_date):
+        return redirect(url_for('dashboard'))
+    else:
+        flash('Error updating due date', 'danger')
+        return redirect(url_for('dashboard'))
+
+@app.route('/research/task/<int:task_id>/update_start_date', methods=['POST'])
+def update_task_start_date_route(task_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    # Ownership check
+    task = get_task_by_id(task_id)
+    if not task or task['user_id'] != session['user_id']:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+    start_date = request.form.get('start_date')
+    from lib.research import update_task_start_date
+    if update_task_start_date(task_id, start_date):
+        return redirect(url_for('dashboard'))
+    else:
+        flash('Error updating start date', 'danger')
+        return redirect(url_for('dashboard'))
+
 @app.route('/logout')
 def logout():
     logout_user()
@@ -62,11 +129,20 @@ def logout():
 @require_login
 def dashboard():
     user = get_current_user()
-    recent_meetings = get_meetings_this_week()
+    recent_meetings = get_meetings_this_week()[:3]
     for meeting in recent_meetings:
         meeting['meeting_time'] = format_meeting_datetime(meeting['meeting_time'])
     user_groups = [g for g in get_user_groups(user['id']) if g['name'] != os.getenv('LAB_NAME', 'Lab Manager')]
-    return render_template('dashboard.html', user=user, meetings=recent_meetings, groups=user_groups)
+    
+    # Get research plan
+    research_plan = get_research_plan(user['id'])
+    
+    today = datetime.now().date()
+    current_date = today.strftime('%Y-%m-%d')
+    timeline_start = (today - timedelta(days=7)).strftime('%Y-%m-%d')
+    timeline_end = (today + timedelta(days=14)).strftime('%Y-%m-%d')
+    
+    return render_template('dashboard.html', user=user, meetings=recent_meetings, groups=user_groups, research_plan=research_plan, timeline_start=timeline_start, timeline_end=timeline_end, current_date=current_date)
 
 # User Management
 @app.route('/users')
@@ -84,7 +160,23 @@ def users():
             user['status'] = 'active'
             
     return render_template('users.html', users=all_users)
+# ... users/create route ...
 
+@app.route('/members/<int:user_id>/research')
+@require_login
+def member_research(user_id):
+    target_user = get_user_by_id(user_id)
+    if not target_user:
+        flash('User not found', 'error')
+        return redirect(url_for('research'))
+    
+    plan = get_research_plan(user_id)
+    
+    today = datetime.now().date()
+    timeline_start = (today - timedelta(days=7)).strftime('%Y-%m-%d')
+    timeline_end = (today + timedelta(days=14)).strftime('%Y-%m-%d')
+    
+    return render_template('member_research.html', target_user=target_user, plan=plan, timeline_start=timeline_start, timeline_end=timeline_end)
 @app.route('/users/create', methods=['GET', 'POST'])
 @require_admin
 def create_user_route():
@@ -404,6 +496,13 @@ def delete_group_route(group_id):
         flash('Failed to delete group', 'error')
     return redirect(url_for('groups'))
 
+@app.route('/research')
+@require_login
+def research():
+    from lib.groups import get_research_tree
+    tree = get_research_tree()
+    return render_template('research.html', tree=tree)
+
 # Meeting Management
 @app.route('/meetings')
 @require_login
@@ -646,7 +745,9 @@ def delete_content_route(content_id):
         flash('Content deleted successfully!', 'success')
     else:
         flash('Failed to delete content', 'error')
-    return redirect(url_for('content'))
+    
+    # Redirect back to where the request came from (e.g. dashboard)
+    return redirect(request.referrer or url_for('content'))
 
 @app.route('/content/<int:content_id>/download')
 def download_content(content_id):
@@ -661,7 +762,8 @@ def download_content(content_id):
         flash('Access denied', 'error')
         return redirect(url_for('content'))
     
-    return send_file(content_item['file_path'], as_attachment=True, download_name=content_item['filename'])
+    download_name = content_item.get('original_filename') or content_item['filename']
+    return send_file(content_item['file_path'], as_attachment=True, download_name=download_name)
 
 @app.route('/share/<share_link>')
 def shared_content(share_link):
@@ -776,6 +878,89 @@ def delete_server_route(server_id):
     else:
         flash('Failed to delete server', 'error')
     return redirect(url_for('inventory'))
+
+# Research Plan Management
+@app.route('/dashboard/research/update', methods=['POST'])
+@require_login
+def update_research_problem_route():
+    user = get_current_user()
+    problem_statement = request.form.get('problem_statement')
+    research_progress = request.form.get('research_progress')
+    
+    if update_research_problem(user['id'], problem_statement, research_progress):
+        flash('Research plan updated!', 'success')
+    else:
+        flash('Failed to update research plan', 'error')
+    return redirect(url_for('dashboard'))
+
+@app.route('/dashboard/research/upload_doc', methods=['POST'])
+@require_login
+def upload_research_document_route():
+    user = get_current_user()
+    file = request.files.get('file')
+    title = request.form.get('title')
+    description = request.form.get('description')
+    
+    if not title:
+        title = file.filename if file else "Untitled Document"
+        
+    if file and upload_content(file, title, description, user['id'], research_plan_id=user['id'], access_level='link', upload_folder=app.config['UPLOAD_FOLDER']):
+        flash('Document uploaded successfully!', 'success')
+    else:
+        flash('Failed to upload document', 'error')
+    return redirect(url_for('dashboard'))
+
+@app.route('/dashboard/tasks/add', methods=['POST'])
+@require_login
+def add_research_task_route():
+    user = get_current_user()
+    task_name = request.form.get('task_name')
+    due_date = request.form.get('due_date')
+    start_date = request.form.get('start_date')
+    status = request.form.get('status', 'pending')
+    
+    if add_research_task(user['id'], task_name, due_date, status, start_date):
+        flash('Task added successfully!', 'success')
+    else:
+        flash('Failed to add task', 'error')
+    return redirect(url_for('dashboard'))
+
+@app.route('/dashboard/tasks/<int:task_id>/update', methods=['POST'])
+@require_login
+def update_research_task_route(task_id):
+    user = get_current_user()
+    status = request.form.get('status')
+    
+    # Check ownership
+    task = get_task_by_id(task_id)
+    if not task or task['user_id'] != user['id']:
+        flash('Task not found or unauthorized', 'error')
+        return redirect(url_for('dashboard'))
+    
+    if update_research_task_status(task_id, status):
+        flash('Task updated!', 'success')
+    else:
+        flash('Failed to update task', 'error')
+    return redirect(url_for('dashboard'))
+
+@app.route('/dashboard/tasks/<int:task_id>/delete', methods=['POST'])
+@require_login
+def delete_research_task_route(task_id):
+    user = get_current_user()
+    
+    # Check ownership
+    task = get_task_by_id(task_id)
+    if not task or task['user_id'] != user['id']:
+        flash('Task not found or unauthorized', 'error')
+        return redirect(url_for('dashboard'))
+    
+    if delete_research_task(task_id):
+        flash('Task deleted!', 'success')
+    else:
+        flash('Failed to delete task', 'error')
+    return redirect(url_for('dashboard'))
+
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9000, debug=True)

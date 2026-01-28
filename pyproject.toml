@@ -1,8 +1,12 @@
 [project]
 name = "lab-manager"
-version = "1.0.0"
-description = "Lab Management System"
+# name = "labMan"
+version = "0.1.0"
+authors = [ { name="Lokesh Mohanty", email="lokesh1197@gmail.com" } ]
+description = "Academic Lab Management System"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
 requires-python = ">=3.10"
 dependencies = [
     "dotenv>=0.9.9",
@@ -15,3 +19,22 @@ dev = [
     "gunicorn>=23.0.0",
     "pytest>=9.0.2",
 ]
+
+# [build-system]
+# requires = ["uv_build>=0.9.26,<0.10.0"]
+# build-backend = "uv_build"
+#
+# [tool.uv.build-backend]
+# module-name = "labman"
+# module-root = ""
+#
+# [[tool.uv.index]]
+# name = "testpypi"
+# url = "https://test.pypi.org/simple/"
+# publish-url = "https://test.pypi.org/legacy/"
+# explicit = true
+#
+# [project.urls]
+# Homepage = "https://github.com/lokeshmohanty/labman"
+# Issues = "https://github.com/lokeshmohanty/labman/issues"
+# Documentation = "https://github.com/lokeshmohanty/labman/README.md"

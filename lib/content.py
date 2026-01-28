@@ -4,17 +4,15 @@ from werkzeug.utils import secure_filename
 from lib.data import get_db, query_db, execute_db
 from lib.auth import check_user_group_access
 
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'zip', 'csv', 'py', 'ipynb', 'md'}
-
 def allowed_file(filename):
-    """Check if file extension is allowed"""
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    """Check if file extension is allowed - allowing all for now"""
+    return True
 
 def generate_share_link():
     """Generate a unique share link"""
     return secrets.token_urlsafe(32)
 
-def upload_content(file, title, description, uploaded_by, group_id=None, meeting_id=None, access_level='group', upload_folder='uploads'):
+def upload_content(file, title, description, uploaded_by, group_id=None, meeting_id=None, research_plan_id=None, access_level='group', upload_folder='uploads'):
     """Upload a new content file"""
     try:
         if not file or not allowed_file(file.filename):
@@ -28,6 +26,8 @@ def upload_content(file, title, description, uploaded_by, group_id=None, meeting
             save_path = os.path.join(save_path, f"group_{group_id}")
         if meeting_id:
             save_path = os.path.join(save_path, f"meeting_{meeting_id}")
+        if research_plan_id:
+            save_path = os.path.join(save_path, f"research_{research_plan_id}")
         
         os.makedirs(save_path, exist_ok=True)
         
@@ -47,10 +47,10 @@ def upload_content(file, title, description, uploaded_by, group_id=None, meeting
         
         cursor = execute_db(
             '''INSERT INTO content (title, description, filename, file_path, file_size, 
-               uploaded_by, group_id, meeting_id, access_level, share_link) 
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+               uploaded_by, group_id, meeting_id, research_plan_id, access_level, share_link) 
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
             (title, description, filename, file_path, file_size, uploaded_by, 
-             group_id, meeting_id, access_level, share_link)
+             group_id, meeting_id, research_plan_id, access_level, share_link)
         )
         content_id = cursor.lastrowid
         
@@ -73,7 +73,7 @@ def upload_content(file, title, description, uploaded_by, group_id=None, meeting
         print(f"Error uploading content: {e}")
         return False
 
-def get_content(user_id=None, group_id=None, meeting_id=None):
+def get_content(user_id=None, group_id=None, meeting_id=None, research_plan_id=None):
     """Get content with optional filters"""
     query = '''
         SELECT c.*, u.name as uploaded_by_name, g.name as group_name, m.title as meeting_title
@@ -96,6 +96,10 @@ def get_content(user_id=None, group_id=None, meeting_id=None):
     if meeting_id:
         query += ' AND c.meeting_id = ?'
         params.append(meeting_id)
+        
+    if research_plan_id:
+        query += ' AND c.research_plan_id = ?'
+        params.append(research_plan_id)
     
     query += ' ORDER BY c.created_at DESC'
     
@@ -139,22 +143,9 @@ def check_content_access(content_id, user_id=None):
     if user_id:
         return True
 
-    # # Check if user is admin
-    # user = query_db('SELECT is_admin FROM users WHERE id = ?', [user_id], one=True)
-    # if user and user['is_admin']:
-    #     return True
-    #
-    # # Check if user is the uploader
-    # if content['uploaded_by'] == user_id:
-    #     return True
-    #
-    # # Check group access
-    # if content['group_id'] and check_user_group_access(user_id, content['group_id']):
-    #     return True
-    
     return False
 
-def update_content(content_id, title, description, group_id=None, meeting_id=None, access_level='group'):
+def update_content(content_id, title, description, group_id=None, meeting_id=None, research_plan_id=None, access_level='group'):
     """Update content metadata"""
     try:
         # If changing to link access, generate share link
@@ -164,8 +155,8 @@ def update_content(content_id, title, description, group_id=None, meeting_id=Non
             share_link = existing['share_link'] if existing and existing['share_link'] else generate_share_link()
         
         execute_db(
-            'UPDATE content SET title = ?, description = ?, group_id = ?, meeting_id = ?, access_level = ?, share_link = ? WHERE id = ?',
-            (title, description, group_id, meeting_id, access_level, share_link, content_id)
+            'UPDATE content SET title = ?, description = ?, group_id = ?, meeting_id = ?, research_plan_id = ?, access_level = ?, share_link = ? WHERE id = ?',
+            (title, description, group_id, meeting_id, research_plan_id, access_level, share_link, content_id)
         )
         return True
     except Exception as e:

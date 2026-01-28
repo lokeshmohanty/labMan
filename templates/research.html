@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Research - {{ lab_name }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1 style="color: var(--primary); margin-bottom: 2rem;">Research Groups</h1>
+
+    {% macro render_group(group) %}
+    <div
+        style="border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; background-color: var(--bg-white);">
+        <h2 style="color: var(--primary); margin-bottom: 0.5rem; font-size: 1.5rem;">
+            <a href="{{ url_for('group_detail', group_id=group.id) }}" style="text-decoration: none; color: inherit;">
+                {{ group.name }}
+            </a>
+        </h2>
+        {% if group.description %}
+        <p style="color: var(--text-light); margin-bottom: 1rem;">{{ group.description }}</p>
+        {% endif %}
+
+        {% if group.members %}
+        <div style="margin-bottom: 1rem;">
+            <h4 style="color: var(--text-dark); margin-bottom: 0.5rem; font-size: 1rem;">Members:</h4>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                {% for member in group.members %}
+                <a href="{{ url_for('member_research', user_id=member.id) }}" style="text-decoration: none;">
+                    <span class="badge badge-user" title="{{ member.email }}" style="cursor: pointer;">
+                        {{ member.name }}
+                        {% if member.is_admin %} (Admin){% endif %}
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if group.subgroups %}
+        <div
+            style="margin-left: 2rem; border-left: 2px solid var(--primary-light); padding-left: 1rem; margin-top: 1rem;">
+            <h4 style="color: var(--primary); margin-bottom: 1rem;">Subgroups:</h4>
+            {% for subgroup in group.subgroups %}
+            {{ render_group(subgroup) }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endmacro %}
+
+    {% if tree %}
+    {% for group in tree %}
+    {{ render_group(group) }}
+    {% endfor %}
+    {% else %}
+    <p style="text-align: center; color: var(--text-light); padding: 2rem;">No research groups found.</p>
+    {% endif %}
+</div>
+{% endblock %}
