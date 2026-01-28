@@ -176,7 +176,9 @@
             if (dayMeetings.length > 0) {
                 html += `<div style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.25rem;">`;
                 dayMeetings.slice(0, 2).forEach(m => {
+                    html += `<a href="/meetings/${m.id}" style="text-decoration: none; color: inherit; display: block;" onclick="event.stopPropagation()">`;
                     html += `<div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${m.title}">• ${m.title}</div>`;
+                    html += `</a>`;
                 });
                 if (dayMeetings.length > 2) {
                     html += `<div>+${dayMeetings.length - 2} more</div>`;
