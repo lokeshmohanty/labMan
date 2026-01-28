@@ -2,6 +2,11 @@
 
 An opinionated lab management system for academic labs, now available as a CLI tool.
 
+[![PyPI version](https://img.shields.io/pypi/v/ra-labman.svg)](https://pypi.org/project/ra-labman/)
+[![Python versions](https://img.shields.io/pypi/pyversions/ra-labman.svg)](https://pypi.org/project/ra-labman/)
+![GitHub Release](https://img.shields.io/github/v/release/lokeshmohanty/labMan)
+[![License](https://img.shields.io/pypi/l/ra-labman.svg)](https://github.com/lokeshmohanty/labMan/blob/main/LICENSE)
+
 ## Directory Structure
 - `labman/`: Main package directory
     - `lib/`: Backend modules
@@ -122,6 +127,7 @@ Default Login (first run):
 - Password: `admin123` (Change immediately!)
 
 ## Features
+
 - **User Management**: Admin/User roles, secure auth with email activation.
 - **Research Groups**: Hierarchical organization with member management.
 - **Meeting Management**: Scheduling, RSVP, email notifications.
@@ -130,6 +136,10 @@ Default Login (first run):
 - **Email Notifications**: Automatic notifications with retry mechanism and background queue.
 - **CLI Tools**: Built-in server management, logging, and backup.
 
+![Dashboard](./assets/dashboard.png)
+![Meetings](./assets/meetings.png)
+![Research](./assets/research-groups.png)
+
 ## Email Notification System
 
 The system includes a robust email notification system with:
@@ -137,6 +147,28 @@ The system includes a robust email notification system with:
 - **Background Queue**: Mass notifications (meetings, content) are sent asynchronously to avoid blocking
 - **Failure Logging**: Failed emails are logged to database for manual review and retry
 - **Graceful Degradation**: Application continues to work even if email server is unavailable
+
+# Development
+
+To contribute:
+1. Install in editable mode: `uv pip install -e .`
+2. Run tests: `pytest`
+3. Check code quality: `ruff check labman/`
+
+## Testing
+
+Run included tests and utilities:
+
+```bash
+# Test Email Configuration
+labman test email
+
+# Populate Test Data
+labman test data
+
+# Clear Test Data
+labman test clear
+```
 
 ## Troubleshooting
 
@@ -183,27 +215,3 @@ sqlite3 data/your_lab.db "PRAGMA integrity_check;"
    ```bash
    labman log
    ```
-
-3. **Verify dependencies**:
-   ```bash
-   uv pip install -e .
-   ```
-
-## Testing
-Run included tests and utilities:
-```bash
-# Test Email Configuration
-labman test email
-
-# Populate Test Data
-labman test data
-
-# Clear Test Data
-labman test clear
-```
-
-## Development
-To contribute:
-1. Install in editable mode: `uv pip install -e .`
-2. Run tests: `pytest`
-3. Check code quality: `ruff check labman/`
