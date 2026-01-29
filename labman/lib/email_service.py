@@ -309,7 +309,7 @@ Best regards,
 def _render_meeting_notification_template(recipient: Dict, meeting: Dict, lab_name: str, server_url: str, **kwargs) -> tuple:
     """Render meeting notification template"""
     text = f"""
-Hello {recipient['name']},
+Hello,
 
 A new meeting has been scheduled:
 
@@ -506,7 +506,7 @@ def send_meeting_bulk_notification(creator: Dict, recipients: List[Dict], meetin
     cc_emails = [r['email'] for r in recipients if r.get('email_notifications', True) and r['id'] != creator['id']]
     
     text, html = _render_email_template('meeting_notification', recipient=creator, meeting=meeting)
-    subject = f'New Meeting: {meeting["title"]}'
+    subject = f'Meeting: {meeting["title"]}'
     
     return _send_email(creator['email'], subject, text, html, cc_emails=cc_emails)
 
