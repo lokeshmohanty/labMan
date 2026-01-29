@@ -9,9 +9,8 @@
     <form method="POST">
         <div class="form-group">
             <label for="name">Group Name</label>
-            <input type="text" id="name" name="name" class="form-control" required {% if group and
-                group.name=='Airex Lab' %}disabled{% endif %} value="{% if group %}{{ group.name }}{% endif %}"
-                placeholder="Enter group name">
+            <input type="text" id="name" name="name" class="form-control" required {% if group and group.name==lab_name
+                %}disabled{% endif %} value="{% if group %}{{ group.name }}{% endif %}" placeholder="Enter group name">
         </div>
 
         <div class="form-group">

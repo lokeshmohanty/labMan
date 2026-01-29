@@ -25,10 +25,6 @@
             <tr>
                 <td>
                     <strong>{{ group.name }}</strong>
-                    {% if group.name == 'airex' %}
-                    <span class="badge"
-                        style="background-color: var(--primary); color: white; margin-left: 0.5rem;">Default</span>
-                    {% endif %}
                 </td>
                 <td>{{ group.description or '-' }}</td>
                 <td>{{ group.parent_name or '-' }}</td>

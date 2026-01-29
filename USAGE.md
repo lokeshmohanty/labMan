@@ -25,7 +25,7 @@ Complete guide for using the Lab Management System.
 4. Click "Login"
 
 ### Default Admin Credentials
-- **Email**: admin@airex.iisc.ac.in
+- **Email**: <[smtp_email/admin@example.com]>
 - **Password**: admin123
 - ⚠️ **Change this immediately after first login!**
 
@@ -137,7 +137,7 @@ Click **Groups** to see all research groups with:
 
 ### Group Hierarchy Example
 ```
-airex (root)
+demo (root)
 ├── Machine Learning
 │   ├── Computer Vision
 │   └── Natural Language Processing
@@ -324,7 +324,7 @@ Receive emails for:
 ### Types of Notifications
 
 #### Meeting Created
-Sent to all airex group members when new meeting is scheduled:
+Sent to all group members when new meeting is scheduled:
 - Meeting title and description
 - Date and time
 - Organizer
@@ -511,33 +511,11 @@ A: Inventory → Servers tab shows all lab servers.
 ### For General Issues
 1. Check this user guide
 2. Try troubleshooting steps
-3. Ask a colleague
-4. Contact system administrator
+3. Contact system administrator
+4. Raise an issue here
 
 ### For Password Issues
 1. Use "Forgot password?" on login
 2. Check email for reset link
 3. Contact admin if not received
-
-### For Technical Issues
-Contact: admin@airex.iisc.ac.in
-
-Include:
-- What you were trying to do
-- Error message (if any)
-- Screenshot (if helpful)
-- Browser and device info
-
 ---
-
-## Updates and New Features
-
-Check dashboard announcements for:
-- New features
-- System updates
-- Scheduled maintenance
-- Important notices
-
----
-
-**Need more help?** Contact your system administrator at admin@airex.iisc.ac.in
