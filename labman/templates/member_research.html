@@ -156,5 +156,68 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Comments Section -->
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="color: var(--primary); margin: 0;">Comments</h3>
+        {% if can_edit_comments %}
+        <div id="comments-actions">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="toggleCommentsEdit()"
+                id="comments-edit-btn">Edit</button>
+            <div id="comments-controls" style="display: none;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="cancelCommentsEdit()">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="submitCommentsForm()">Update</button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <form method="POST" action="{{ url_for('update_research_comments_route', user_id=target_user.id) }}"
+        id="comments-form">
+        <div id="comments-viewer"
+            style="padding: 1.5rem; border: 1px solid var(--border); border-radius: 4px; background: white; min-height: 150px;">
+            <!-- Content rendered via JS -->
+        </div>
+
+        {% if can_edit_comments %}
+        <div id="comments-editor" style="display: none;">
+            <div class="form-group">
+                <textarea name="comments" id="comments-textarea" class="form-control" rows="10"
+                    placeholder="Enter comments...">{{ plan.comments if plan.comments else '' }}</textarea>
+            </div>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<script>
+    // Initial Render for Comments
+    document.addEventListener('DOMContentLoaded', () => {
+        const commentsText = document.getElementById('comments-textarea') ? document.getElementById('comments-textarea').value : '{{ plan.comments if plan.comments else '' }}';
+        const viewerElement = document.getElementById('comments-viewer');
+        if (viewerElement) {
+            viewerElement.innerHTML = marked.parse(commentsText || '*No comments yet.*');
+        }
+    });
+
+    function toggleCommentsEdit() {
+        document.getElementById('comments-viewer').style.display = 'none';
+        document.getElementById('comments-editor').style.display = 'block';
+        document.getElementById('comments-edit-btn').style.display = 'none';
+        document.getElementById('comments-controls').style.display = 'inline-block';
+    }
+
+    function cancelCommentsEdit() {
+        document.getElementById('comments-viewer').style.display = 'block';
+        document.getElementById('comments-editor').style.display = 'none';
+        document.getElementById('comments-edit-btn').style.display = 'inline-block';
+        document.getElementById('comments-controls').style.display = 'none';
+    }
+
+    function submitCommentsForm() {
+        document.getElementById('comments-form').submit();
+    }
+</script>
 </div>
 {% endblock %}

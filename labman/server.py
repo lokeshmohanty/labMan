@@ -148,6 +148,8 @@ def users():
 @app.route('/members/<int:user_id>/research')
 @require_login
 def member_research(user_id):
+    from labman.lib.groups import get_user_groups
+    
     target_user = get_user_by_id(user_id)
     if not target_user:
         flash('User not found', 'error')
@@ -159,7 +161,23 @@ def member_research(user_id):
     timeline_start = (today - timedelta(days=7)).strftime('%Y-%m-%d')
     timeline_end = (today + timedelta(days=14)).strftime('%Y-%m-%d')
     
-    return render_template('member_research.html', target_user=target_user, plan=plan, timeline_start=timeline_start, timeline_end=timeline_end)
+    # Check if current user can edit comments (admin or group lead)
+    current_user = get_current_user()
+    can_edit_comments = False
+    
+    if current_user['is_admin']:
+        can_edit_comments = True
+    else:
+        # Check if current user is a lead of any group that the target user belongs to
+        target_user_groups = get_user_groups(user_id)
+        for group in target_user_groups:
+            if group.get('lead_id') == current_user['id']:
+                can_edit_comments = True
+                break
+    
+    return render_template('member_research.html', target_user=target_user, plan=plan, 
+                         timeline_start=timeline_start, timeline_end=timeline_end,
+                         can_edit_comments=can_edit_comments)
 @app.route('/users/create', methods=['GET', 'POST'])
 @require_admin
 def create_user_route():
@@ -176,9 +194,59 @@ def create_user_route():
     
     return render_template('user_form.html')
 
-@app.route('/users/<int:user_id>/resend-invitation', methods=['POST'])
+@app.route('/research/<int:user_id>/update-comments', methods=['POST'])
+@require_login
+def update_research_comments_route(user_id):
+    from labman.lib.research import update_research_comments
+    from labman.lib.groups import get_user_groups
+    
+    print(f"DEBUG: Attempting to update comments for user_id={user_id}")
+    
+    target_user = get_user_by_id(user_id)
+    if not target_user:
+        print(f"DEBUG: User {user_id} not found")
+        flash('User not found', 'error')
+        return redirect(url_for('research'))
+    
+    current_user = get_current_user()
+    print(f"DEBUG: Current user: {current_user['id']}, is_admin: {current_user['is_admin']}")
+    
+    # Check permissions: admin or group lead
+    can_edit = False
+    if current_user['is_admin']:
+        can_edit = True
+        print(f"DEBUG: User is admin, can edit")
+    else:
+        # Check if current user is a lead of any group that the target user belongs to
+        target_user_groups = get_user_groups(user_id)
+        print(f"DEBUG: Target user groups: {[g.get('name') for g in target_user_groups]}")
+        for group in target_user_groups:
+            if group.get('lead_id') == current_user['id']:
+                can_edit = True
+                print(f"DEBUG: User is lead of group {group.get('name')}, can edit")
+                break
+    
+    if not can_edit:
+        print(f"DEBUG: Permission denied for user {current_user['id']}")
+        flash('Only admins and group leads can edit research comments', 'error')
+        return redirect(url_for('member_research', user_id=user_id))
+    
+    comments = request.form.get('comments', '')
+    print(f"DEBUG: Comments length: {len(comments)}")
+    
+    if update_research_comments(user_id, comments):
+        print(f"DEBUG: Successfully updated comments")
+        flash('Research comments updated!', 'success')
+    else:
+        print(f"DEBUG: Failed to update comments")
+        flash('Failed to update comments', 'error')
+    
+    return redirect(url_for('member_research', user_id=user_id))
+
+
+@app.route('/users/<int:user_id>/resend-activation', methods=['POST'])
 @require_admin
-def resend_invitation(user_id):
+def resend_activation_route(user_id):
     if resend_activation_email(user_id):
         flash('Invitation email resent successfully!', 'success')
     else:

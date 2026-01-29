@@ -5,8 +5,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
-
 # Ensure data directory exists in the project root
 # Use current working directory as the base (where labman is run from)
 db_dir = os.path.join(os.getcwd(), 'data')
@@ -22,6 +20,7 @@ def get_db():
         db = g._database = sqlite3.connect(DATABASE)
         db.row_factory = sqlite3.Row
     return db
+
 
 def close_db(e=None):
     """Close database connection"""
@@ -165,6 +164,7 @@ def init_db():
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             start_date DATE,
             end_date DATE,
+            comments TEXT,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     ''')

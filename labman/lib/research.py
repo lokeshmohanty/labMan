@@ -41,6 +41,7 @@ def get_research_plan(user_id):
         'research_progress': research_progress,
         'github_link': github_link,
         'manuscript_link': manuscript_link,
+        'comments': plan_dict.get('comments', ''),
         'tasks': tasks_list,
         'documents': documents,
         'start_date': start_date,
@@ -174,4 +175,39 @@ def update_task_start_date(task_id, new_start_date):
         return True
     except Exception as e:
         print(f"Error updating task start date: {e}")
+        return False
+
+def update_research_comments(user_id, comments):
+    """Update research comments (admin/group lead only)"""
+    try:
+        # Check if record exists first
+        existing = query_db('SELECT * FROM research_plans WHERE user_id = ?', [user_id], one=True)
+        
+        if not existing:
+            # Create new record with comments
+            execute_db('''
+                INSERT INTO research_plans (user_id, comments) 
+                VALUES (?, ?)
+            ''', (user_id, comments))
+        else:
+            # Update existing record
+            execute_db('''
+                UPDATE research_plans 
+                SET comments = ?, updated_at = CURRENT_TIMESTAMP 
+                WHERE user_id = ?
+            ''', (comments, user_id))
+        
+        # Log action (optional - don't fail if logging fails)
+        try:
+            from flask import session
+            from labman.lib.audit import log_action
+            log_action(session.get('user_id'), "updated research comments", f"User ID: {user_id}")
+        except Exception as log_error:
+            print(f"Warning: Could not log action: {log_error}")
+        
+        return True
+    except Exception as e:
+        print(f"Error updating research comments: {e}")
+        import traceback
+        traceback.print_exc()
         return False
