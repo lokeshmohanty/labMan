@@ -65,6 +65,72 @@
     </div>
     {% endif %}
 
+    <!-- Meeting Summary Section -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <div style="background-color: var(--bg-light); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="color: var(--primary); margin: 0;">Meeting Summary</h3>
+            {% if is_participant or session.is_admin %}
+            <div id="summary-actions">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleSummaryEdit()"
+                    id="summary-edit-btn">Edit</button>
+                <div id="summary-controls" style="display: none;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="cancelSummaryEdit()">Cancel</button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="submitSummaryForm()">Update</button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <form method="POST" action="{{ url_for('update_meeting_summary_route', meeting_id=meeting.id) }}"
+            id="summary-form">
+            <div id="summary-viewer"
+                style="padding: 1.5rem; border: 1px solid var(--border); border-radius: 4px; background: white; min-height: 150px;">
+                <!-- Content rendered via JS -->
+            </div>
+
+            <div id="summary-editor" style="display: none;">
+                <div class="form-group">
+                    <textarea name="summary" id="summary-textarea" class="form-control" rows="10"
+                        placeholder="Enter meeting summary (Markdown supported)...">{{ meeting.summary if meeting.summary else '' }}</textarea>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Initial Render
+        document.addEventListener('DOMContentLoaded', () => {
+            const summaryText = document.getElementById('summary-textarea').value;
+            document.getElementById('summary-viewer').innerHTML = marked.parse(summaryText || '*No summary yet. Click Edit to add one.*');
+        });
+
+        function toggleSummaryEdit() {
+            // Show editor, hide viewer
+            document.getElementById('summary-viewer').style.display = 'none';
+            document.getElementById('summary-editor').style.display = 'block';
+
+            // Toggle buttons in header
+            document.getElementById('summary-edit-btn').style.display = 'none';
+            document.getElementById('summary-controls').style.display = 'inline-block';
+        }
+
+        function cancelSummaryEdit() {
+            // Hide editor, show viewer
+            document.getElementById('summary-viewer').style.display = 'block';
+            document.getElementById('summary-editor').style.display = 'none';
+
+            // Toggle buttons in header
+            document.getElementById('summary-edit-btn').style.display = 'inline-block';
+            document.getElementById('summary-controls').style.display = 'none';
+        }
+
+        function submitSummaryForm() {
+            document.getElementById('summary-form').submit();
+        }
+    </script>
+
     <!-- RSVP Section -->
     <div style="background-color: var(--bg-light); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
         <h3 style="color: var(--primary); margin-bottom: 1rem;">Will you attend?</h3>

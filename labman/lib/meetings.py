@@ -4,13 +4,13 @@ from labman.lib.email_queue import email_queue
 from datetime import datetime
 import calendar
 
-def create_meeting(title, description, meeting_time, created_by, group_id=None, tags=None):
+def create_meeting(title, description, meeting_time, created_by, group_id=None, tags=None, summary=None):
     """Create a new meeting"""
     try:
         tags_str = ','.join(tags) if tags else None
         cursor = execute_db(
-            'INSERT INTO meetings (title, description, meeting_time, created_by, group_id, tags) VALUES (?, ?, ?, ?, ?, ?)',
-            (title, description, meeting_time, created_by, group_id, tags_str)
+            'INSERT INTO meetings (title, description, meeting_time, created_by, group_id, tags, summary) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            (title, description, meeting_time, created_by, group_id, tags_str, summary)
         )
         meeting_id = cursor.lastrowid
         
@@ -129,13 +129,13 @@ def get_meetings_by_group(group_id):
     ''', [group_id])
     return [dict(meeting) for meeting in meetings]
 
-def update_meeting(meeting_id, title, description, meeting_time, group_id=None, tags=None, send_notification=False):
+def update_meeting(meeting_id, title, description, meeting_time, group_id=None, tags=None, summary=None, send_notification=False):
     """Update meeting information"""
     try:
         tags_str = ','.join(tags) if tags else None
         execute_db(
-            'UPDATE meetings SET title = ?, description = ?, meeting_time = ?, group_id = ?, tags = ? WHERE id = ?',
-            (title, description, meeting_time, group_id, tags_str, meeting_id)
+            'UPDATE meetings SET title = ?, description = ?, meeting_time = ?, group_id = ?, tags = ?, summary = ? WHERE id = ?',
+            (title, description, meeting_time, group_id, tags_str, summary, meeting_id)
         )
         
         # Send notification if time changed
@@ -243,3 +243,21 @@ def get_meeting_responses(meeting_id):
         ORDER BY mr.response, u.name
     ''', [meeting_id])
     return [dict(r) for r in responses]
+
+def update_meeting_summary(meeting_id, summary):
+    """Update only the summary field of a meeting"""
+    try:
+        execute_db(
+            'UPDATE meetings SET summary = ? WHERE id = ?',
+            (summary, meeting_id)
+        )
+        
+        # Log action
+        from flask import session
+        from labman.lib.audit import log_action
+        log_action(session.get('user_id'), "updated meeting summary", f"Meeting ID: {meeting_id}")
+        
+        return True
+    except Exception as e:
+        print(f"Error updating meeting summary: {e}")
+        return False

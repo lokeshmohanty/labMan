@@ -20,6 +20,15 @@
         </div>
 
         <div class="form-group">
+            <label for="summary">Meeting Summary</label>
+            <textarea id="summary" name="summary" class="form-control" rows="6"
+                placeholder="Meeting summary (Markdown supported)...">{% if meeting %}{{ meeting.summary }}{% endif %}</textarea>
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                Use markdown formatting for better readability. This can be edited by all meeting participants.
+            </small>
+        </div>
+
+        <div class="form-group">
             <label for="meeting_time">Date & Time</label>
             <input type="datetime-local" id="meeting_time" name="meeting_time" class="form-control" required
                 value="{% if meeting %}{{ meeting.meeting_time[:16] }}{% else %}{{ default_time }}{% endif %}">

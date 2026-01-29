@@ -555,9 +555,10 @@ def create_meeting_route():
         group_id = request.form.get('group_id')
         tags_str = request.form.get('tags', '')
         tags = [t.strip() for t in tags_str.split(',') if t.strip()]
+        summary = request.form.get('summary', '')
         
         user = get_current_user()
-        if create_meeting(title, description, meeting_time, user['id'], group_id, tags):
+        if create_meeting(title, description, meeting_time, user['id'], group_id, tags, summary):
             flash('Meeting created successfully!', 'success')
             return redirect(url_for('meetings'))
         else:
@@ -597,12 +598,13 @@ def edit_meeting(meeting_id):
         group_id = request.form.get('group_id')
         tags_str = request.form.get('tags', '')
         tags = [t.strip() for t in tags_str.split(',') if t.strip()]
+        summary = request.form.get('summary', '')
         
         # Check if time changed
         old_time = meeting['meeting_time']
         time_changed = (new_time != old_time)
         
-        if update_meeting(meeting_id, title, description, new_time, group_id, tags, send_notification=time_changed):
+        if update_meeting(meeting_id, title, description, new_time, group_id, tags, summary, send_notification=time_changed):
             flash('Meeting updated successfully!', 'success')
             return redirect(url_for('meeting_detail', meeting_id=meeting_id))
         else:
@@ -642,6 +644,8 @@ def delete_meeting_route(meeting_id):
 @app.route('/meetings/<int:meeting_id>')
 @require_login
 def meeting_detail(meeting_id):
+    from labman.lib.groups import get_group_members
+    
     meeting = get_meeting_by_id(meeting_id)
     if not meeting:
         flash('Meeting not found', 'error')
@@ -654,9 +658,15 @@ def meeting_detail(meeting_id):
     user = get_current_user()
     can_edit = user['is_admin'] or meeting['created_by'] == user['id']
     
+    # Check if user is a participant (can edit summary)
+    is_participant = False
+    if meeting['group_id']:
+        members = get_group_members(meeting['group_id'])
+        is_participant = any(m['id'] == user['id'] for m in members)
+    
     contents = get_content(meeting_id=meeting_id)
     responses = get_meeting_responses(meeting_id)
-    return render_template('meeting_detail.html', meeting=meeting, contents=contents, responses=responses, can_edit=can_edit)
+    return render_template('meeting_detail.html', meeting=meeting, contents=contents, responses=responses, can_edit=can_edit, is_participant=is_participant)
 
 @app.route('/meetings/<int:meeting_id>/respond', methods=['POST'])
 @require_login
@@ -667,6 +677,37 @@ def respond_to_meeting(meeting_id):
         flash('Response recorded!', 'success')
     else:
         flash('Failed to record response', 'error')
+    return redirect(url_for('meeting_detail', meeting_id=meeting_id))
+
+@app.route('/meetings/<int:meeting_id>/update-summary', methods=['POST'])
+@require_login
+def update_meeting_summary_route(meeting_id):
+    from labman.lib.meetings import update_meeting_summary
+    from labman.lib.groups import get_group_members
+    
+    meeting = get_meeting_by_id(meeting_id)
+    if not meeting:
+        flash('Meeting not found', 'error')
+        return redirect(url_for('meetings'))
+    
+    user = get_current_user()
+    
+    # Check if user is a participant (member of the meeting's group)
+    is_participant = False
+    if meeting['group_id']:
+        members = get_group_members(meeting['group_id'])
+        is_participant = any(m['id'] == user['id'] for m in members)
+    
+    if not is_participant and not user['is_admin']:
+        flash('Only meeting participants can edit the summary', 'error')
+        return redirect(url_for('meeting_detail', meeting_id=meeting_id))
+    
+    summary = request.form.get('summary', '')
+    if update_meeting_summary(meeting_id, summary):
+        flash('Meeting summary updated!', 'success')
+    else:
+        flash('Failed to update summary', 'error')
+    
     return redirect(url_for('meeting_detail', meeting_id=meeting_id))
 
 # Content Management

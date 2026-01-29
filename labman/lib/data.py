@@ -83,6 +83,7 @@ def init_db():
             created_by INTEGER NOT NULL,
             group_id INTEGER,
             tags TEXT,
+            summary TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (created_by) REFERENCES users(id),
             FOREIGN KEY (group_id) REFERENCES research_groups(id)
