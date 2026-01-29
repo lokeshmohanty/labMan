@@ -8,6 +8,10 @@ def add_inventory_item(name, description, quantity, location):
             'INSERT INTO inventory (name, description, quantity, location) VALUES (?, ?, ?, ?)',
             (name, description, quantity, location)
         )
+        # Log action
+        from flask import session
+        from labman.lib.audit import log_action
+        log_action(session.get('user_id'), "added inventory item", f"Name: {name}")
         return True
     except Exception as e:
         print(f"Error adding inventory item: {e}")
@@ -32,6 +36,10 @@ def update_inventory_item(item_id, name, description, quantity, location):
                WHERE id = ?''',
             (name, description, quantity, location, item_id)
         )
+        # Log action
+        from flask import session
+        from labman.lib.audit import log_action
+        log_action(session.get('user_id'), "updated inventory item", f"ItemID: {item_id}, Name: {name}")
         return True
     except Exception as e:
         print(f"Error updating inventory item: {e}")
@@ -54,7 +62,13 @@ def update_inventory_quantity(item_id, quantity_change):
 def delete_inventory_item(item_id):
     """Delete an inventory item"""
     try:
+        item = get_inventory_by_id(item_id)
         execute_db('DELETE FROM inventory WHERE id = ?', (item_id,))
+        # Log action
+        from flask import session
+        from labman.lib.audit import log_action
+        if item:
+            log_action(session.get('user_id'), "deleted inventory item", f"Name: {item['name']}")
         return True
     except Exception as e:
         print(f"Error deleting inventory item: {e}")

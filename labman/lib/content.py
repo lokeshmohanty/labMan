@@ -72,6 +72,10 @@ def upload_content(file, title, description, uploaded_by, group_id=None, meeting
                     # Queue bulk content notification
                     email_queue.enqueue(send_content_bulk_notification, uploader=uploader, recipients=members, meeting=meeting, content=content_item)
         
+        # Log action
+        from labman.lib.audit import log_action
+        log_action(uploaded_by, "uploaded content", f"Title: {title}")
+        
         return True
     except Exception as e:
         print(f"Error uploading content: {e}")

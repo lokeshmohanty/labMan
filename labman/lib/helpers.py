@@ -6,6 +6,7 @@ to reduce code duplication and improve maintainability.
 """
 import os
 from typing import Optional, Dict, Any, List
+import yaml
 from dotenv import load_dotenv
 
 load_dotenv()

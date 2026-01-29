@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Activity History - {{ lab_name }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 style="color: var(--primary); margin: 0;">Activity History</h1>
+        {% if all_users %}
+        <form method="GET" style="display: flex; gap: 0.5rem; align-items: center;">
+            <select name="user_id" class="form-control" style="width: auto;">
+                <option value="">All Users</option>
+                {% for user in all_users %}
+                <option value="{{ user.id }}" {% if filter_user_id|string==user.id|string %}selected{% endif %}>{{
+                    user.name }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" name="action" class="form-control" placeholder="Action (e.g. login)"
+                value="{{ filter_action or '' }}" style="width: auto;">
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="{{ url_for('history_route') }}" class="btn btn-secondary">Reset</a>
+        </form>
+        {% endif %}
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Time</th>
+                {% if not filter_user_id and all_users %}
+                <th>User</th>
+                {% endif %}
+                <th>Action</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td style="white-space: nowrap;">{{ log.created_at }}</td>
+                {% if not filter_user_id and all_users %}
+                <td><strong>{{ log.user_name or 'System/Unknown' }}</strong></td>
+                {% endif %}
+                <td><span class="badge badge-admin">{{ log.action }}</span></td>
+                <td>{{ log.details or '-' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if not logs %}
+    <p style="text-align: center; color: var(--text-light); padding: 2rem;">No history records found.</p>
+    {% endif %}
+</div>
+{% endblock %}

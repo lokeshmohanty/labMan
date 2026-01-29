@@ -1,13 +1,24 @@
 from labman.lib.data import get_db, query_db, execute_db
 from labman.lib.helpers import get_lab_name
 
-def create_group(name, description, parent_id=None):
-    """Create a new research group"""
+def create_group(name, description, parent_id=None, lead_id=None):
+    """Create a new research group and add creator as member"""
     try:
-        execute_db(
-            'INSERT INTO research_groups (name, description, parent_id) VALUES (?, ?, ?)',
-            (name, description, parent_id)
+        cursor = execute_db(
+            'INSERT INTO research_groups (name, description, parent_id, lead_id) VALUES (?, ?, ?, ?)',
+            (name, description, parent_id, lead_id)
         )
+        group_id = cursor.lastrowid
+        
+        # Creator automatically joins the group
+        if lead_id:
+            add_user_to_group(lead_id, group_id)
+            
+        # Log action
+        from flask import session
+        from labman.lib.audit import log_action
+        log_action(session.get('user_id'), "created group", f"Name: {name}")
+        
         return True
     except Exception as e:
         print(f"Error creating group: {e}")
@@ -16,9 +27,10 @@ def create_group(name, description, parent_id=None):
 def get_all_groups():
     """Get all research groups"""
     groups = query_db('''
-        SELECT g.*, pg.name as parent_name
+        SELECT g.*, pg.name as parent_name, u.name as lead_name
         FROM research_groups g
         LEFT JOIN research_groups pg ON g.parent_id = pg.id
+        LEFT JOIN users u ON g.lead_id = u.id
         ORDER BY g.name
     ''')
     return [dict(group) for group in groups]
@@ -26,11 +38,12 @@ def get_all_groups():
 def get_all_groups_with_counts():
     """Get all research groups with member counts"""
     groups = query_db('''
-        SELECT g.*, pg.name as parent_name,
+        SELECT g.*, pg.name as parent_name, u.name as lead_name,
                COUNT(DISTINCT ug.user_id) as member_count
         FROM research_groups g
         LEFT JOIN research_groups pg ON g.parent_id = pg.id
         LEFT JOIN user_groups ug ON g.id = ug.group_id
+        LEFT JOIN users u ON g.lead_id = u.id
         GROUP BY g.id
         ORDER BY g.name
     ''')
@@ -39,9 +52,10 @@ def get_all_groups_with_counts():
 def get_group_by_id(group_id):
     """Get group by ID"""
     group = query_db('''
-        SELECT g.*, pg.name as parent_name
+        SELECT g.*, pg.name as parent_name, u.name as lead_name, u.email as lead_email
         FROM research_groups g
         LEFT JOIN research_groups pg ON g.parent_id = pg.id
+        LEFT JOIN users u ON g.lead_id = u.id
         WHERE g.id = ?
     ''', [group_id], one=True)
     return dict(group) if group else None
@@ -51,7 +65,7 @@ def get_group_by_name(name):
     group = query_db('SELECT * FROM research_groups WHERE name = ?', [name], one=True)
     return dict(group) if group else None
 
-def update_group(group_id, name, description, parent_id=None):
+def update_group(group_id, name, description, parent_id=None, lead_id=None):
     """Update group information"""
     try:
         # Don't allow renaming default Lab group
@@ -66,9 +80,15 @@ def update_group(group_id, name, description, parent_id=None):
             return False
         
         execute_db(
-            'UPDATE research_groups SET name = ?, description = ?, parent_id = ? WHERE id = ?',
-            (name, description, parent_id, group_id)
+            'UPDATE research_groups SET name = ?, description = ?, parent_id = ?, lead_id = ? WHERE id = ?',
+            (name, description, parent_id, lead_id, group_id)
         )
+        
+        # Log action
+        from flask import session
+        from labman.lib.audit import log_action
+        log_action(session.get('user_id'), "updated group", f"Name: {name}")
+        
         return True
     except Exception as e:
         print(f"Error updating group: {e}")
@@ -90,6 +110,12 @@ def delete_group(group_id):
         
         execute_db('DELETE FROM user_groups WHERE group_id = ?', (group_id,))
         execute_db('DELETE FROM research_groups WHERE id = ?', (group_id,))
+        
+        # Log action
+        from flask import session
+        from labman.lib.audit import log_action
+        log_action(session.get('user_id'), "deleted group", f"Name: {group['name']}")
+        
         return True
     except Exception as e:
         print(f"Error deleting group: {e}")

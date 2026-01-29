@@ -12,7 +12,7 @@ load_dotenv()
 db_dir = os.path.join(os.getcwd(), 'data')
 os.makedirs(db_dir, exist_ok=True)
 
-db_filename = os.getenv('LAB_NAME', 'Demo Lab').lower().replace(" ", "_") + '.db'
+db_filename = os.getenv('LAB_NAME', 'Lab Manager').lower().replace(" ", "_") + '.db'
 DATABASE = os.path.join(db_dir, db_filename)
 
 def get_db():
@@ -53,8 +53,10 @@ def init_db():
             name TEXT UNIQUE NOT NULL,
             description TEXT,
             parent_id INTEGER,
+            lead_id INTEGER,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (parent_id) REFERENCES research_groups(id)
+            FOREIGN KEY (parent_id) REFERENCES research_groups(id),
+            FOREIGN KEY (lead_id) REFERENCES users(id)
         )
     ''')
     
@@ -208,6 +210,18 @@ def init_db():
         )
     ''')
     
+    # Audit logs table
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            action TEXT NOT NULL,
+            details TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    ''')
+
     # Create default Lab group if it doesn't exist
     lab_name = os.getenv('LAB_NAME', 'Lab Manager')
     existing_group = db.execute('SELECT id FROM research_groups WHERE name = ?', (lab_name,)).fetchone()
@@ -215,9 +229,9 @@ def init_db():
         db.execute('INSERT INTO research_groups (name, description) VALUES (?, ?)',
                   (lab_name, f'Default {lab_name} group for all members'))
     
-    # Create default admin user if no users exist
-    existing_users = db.execute('SELECT COUNT(*) as count FROM users').fetchone()
-    if existing_users['count'] == 0:
+    # Create default admin user if no admins exist
+    existing_admins = db.execute('SELECT COUNT(*) as count FROM users WHERE is_admin = 1').fetchone()
+    if existing_admins['count'] == 0:
         from werkzeug.security import generate_password_hash
         password_hash = generate_password_hash('admin123')
         admin_email = os.getenv('SMTP_USERNAME', 'admin@example.com')

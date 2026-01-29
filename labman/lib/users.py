@@ -26,6 +26,11 @@ def create_user(name, email, password, is_admin=False):
         activation_link = f"{get_server_url()}/activate/{token}"
         send_activation_email(email, name, activation_link)
         
+        # Log action
+        from flask import session
+        from labman.lib.audit import log_action
+        log_action(session.get('user_id'), "created user", f"Name: {name}, Email: {email}")
+
         return True
     except Exception as e:
         print(f"Error creating user: {e}")
@@ -57,6 +62,10 @@ def update_user(user_id, name, email, is_admin=False):
             'UPDATE users SET name = ?, email = ?, is_admin = ? WHERE id = ?',
             (name, email, is_admin, user_id)
         )
+        # Log action
+        from flask import session
+        from labman.lib.audit import log_action
+        log_action(session.get('user_id'), "updated user", f"UserID: {user_id}, Name: {name}")
         return True
     except Exception as e:
         print(f"Error updating user: {e}")
@@ -67,6 +76,12 @@ def update_user_password(user_id, new_password):
     try:
         password_hash = generate_password_hash(new_password)
         execute_db('UPDATE users SET password_hash = ? WHERE id = ?', (password_hash, user_id))
+        
+        # Log action
+        from flask import session
+        from labman.lib.audit import log_action
+        log_action(user_id, "updated password", "User updated their own password")
+        
         return True
     except Exception as e:
         print(f"Error updating password: {e}")
@@ -76,6 +91,12 @@ def update_user_notifications(user_id, enabled):
     """Update user notification preferences"""
     try:
         execute_db('UPDATE users SET email_notifications = ? WHERE id = ?', (enabled, user_id))
+        
+        # Log action
+        from flask import session
+        from labman.lib.audit import log_action
+        log_action(user_id, "updated notification settings", f"Enabled: {enabled}")
+        
         return True
     except Exception as e:
         print(f"Error updating notifications: {e}")
@@ -100,10 +121,20 @@ def update_user_profile(user_id, name, new_email):
             
             # Only update name for now, email will be updated after verification
             execute_db('UPDATE users SET name = ? WHERE id = ?', (name, user_id))
+            
+            # Log action
+            from labman.lib.audit import log_action
+            log_action(user_id, "updated profile", f"Name: {name} (Email change pending)")
+            
             return 'verification_sent'
         else:
             # Only updating name
             execute_db('UPDATE users SET name = ? WHERE id = ?', (name, user_id))
+            
+            # Log action
+            from labman.lib.audit import log_action
+            log_action(user_id, "updated profile", f"Name: {name}")
+            
             return True
     except Exception as e:
         print(f"Error updating profile: {e}")
@@ -126,8 +157,14 @@ def send_email_verification(email, name, verification_link):
 def delete_user(user_id):
     """Delete a user"""
     try:
+        user = get_user_by_id(user_id)
         execute_db('DELETE FROM user_groups WHERE user_id = ?', (user_id,))
         execute_db('DELETE FROM users WHERE id = ?', (user_id,))
+        # Log action
+        from flask import session
+        from labman.lib.audit import log_action
+        if user:
+            log_action(session.get('user_id'), "deleted user", f"Name: {user['name']}")
         return True
     except Exception as e:
         print(f"Error deleting user: {e}")

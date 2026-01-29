@@ -56,7 +56,7 @@ def require_admin(f):
             return redirect(url_for('login'))
         
         # Verify user still exists in database
-        user = query_db('SELECT id, is_admin FROM users WHERE id = ?', [session['user_id']], one=True)
+        user = query_db('SELECT id, email, is_admin FROM users WHERE id = ?', [session['user_id']], one=True)
         if not user:
             # User was deleted, clear session
             session.clear()

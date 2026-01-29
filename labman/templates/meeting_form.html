@@ -26,16 +26,17 @@
         </div>
 
         <div class="form-group">
-            <label for="group_id">Research Group (Optional)</label>
-            <select id="group_id" name="group_id" class="form-control">
-                <option value="">All Lab Members</option>
+            <label for="group_id">Research Group</label>
+            <select id="group_id" name="group_id" class="form-control" required>
                 {% for group in groups %}
-                <option value="{{ group.id }}" {% if meeting and meeting.group_id==group.id %}selected{% endif %}>{{
-                    group.name }}</option>
+                <option value="{{ group.id }}" {% if (meeting and meeting.group_id==group.id) or (not meeting and
+                    lab_group and lab_group.id==group.id) %}selected{% endif %}>
+                    {{ group.name }}{% if lab_group and lab_group.id == group.id %} (Lab-wide){% endif %}
+                </option>
                 {% endfor %}
             </select>
             <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
-                Select a specific group or leave blank for all lab members.
+                Meeting notifications will be sent to members of the selected group.
             </small>
         </div>
 

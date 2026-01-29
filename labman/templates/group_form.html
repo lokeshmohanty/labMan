@@ -35,6 +35,21 @@
             </small>
         </div>
 
+        {% if group and all_users %}
+        <div class="form-group">
+            <label for="lead_id">Group Lead</label>
+            <select id="lead_id" name="lead_id" class="form-control">
+                {% for u in all_users %}
+                <option value="{{ u.id }}" {% if group.lead_id==u.id %}selected{% endif %}>{{ u.name }} ({{ u.email }})
+                </option>
+                {% endfor %}
+            </select>
+            <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                The Group Lead can manage members and edit group details.
+            </small>
+        </div>
+        {% endif %}
+
         <div style="display: flex; gap: 1rem; margin-top: 2rem;">
             <button type="submit" class="btn btn-primary">{% if group %}Update Group{% else %}Create Group{% endif
                 %}</button>

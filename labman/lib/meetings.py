@@ -14,17 +14,28 @@ def create_meeting(title, description, meeting_time, created_by, group_id=None, 
         )
         meeting_id = cursor.lastrowid
         
-        # Send notifications to Lab group members in background
+        # Send notifications to Group members in background
         from labman.lib.email_service import send_meeting_bulk_notification
         from labman.lib.users import get_user_by_id
+        from labman.lib.groups import get_group_members
+        from labman.lib.audit import log_action
         
-        members = get_lab_members()
         meeting = get_meeting_by_id(meeting_id)
+        
+        # If no group specified (should be mandatory now), fallback to lab members
+        if group_id:
+            members = get_group_members(group_id)
+        else:
+            members = get_lab_members()
+            
         creator = get_user_by_id(created_by)
         
         if meeting and members and creator:
             # Queue bulk notification
             email_queue.enqueue(send_meeting_bulk_notification, creator=creator, recipients=members, meeting=meeting)
+        
+        # Log action
+        log_action(created_by, "created meeting", f"Title: {title}, Group ID: {group_id}")
         
         return True
     except Exception as e:
@@ -131,6 +142,7 @@ def update_meeting(meeting_id, title, description, meeting_time, group_id=None, 
         if send_notification:
             from labman.lib.email_service import send_meeting_update_bulk_notification
             from labman.lib.users import get_user_by_id
+            from labman.lib.groups import get_group_members
             
             meeting = get_meeting_by_id(meeting_id)
             if not meeting:
@@ -138,11 +150,20 @@ def update_meeting(meeting_id, title, description, meeting_time, group_id=None, 
                 return True  # Update succeeded, just skip notification
             
             creator = get_user_by_id(meeting['created_by'])
-            members = get_lab_members()
+            
+            if group_id:
+                members = get_group_members(group_id)
+            else:
+                members = get_lab_members()
             
             if members and creator:
                 # Queue bulk update notification
                 email_queue.enqueue(send_meeting_update_bulk_notification, creator=creator, recipients=members, meeting=meeting)
+        
+        # Log action
+        from flask import session
+        from labman.lib.audit import log_action
+        log_action(session.get('user_id'), "updated meeting", f"Meeting ID: {meeting_id}, Title: {title}")
         
         return True
     except Exception as e:
@@ -186,7 +207,15 @@ def format_meeting_datetime(dt_str):
 def delete_meeting(meeting_id):
     """Delete a meeting"""
     try:
+        meeting = get_meeting_by_id(meeting_id)
         execute_db('DELETE FROM meetings WHERE id = ?', (meeting_id,))
+        
+        # Log action
+        from flask import session
+        from labman.lib.audit import log_action
+        if meeting:
+            log_action(session.get('user_id'), "deleted meeting", f"Title: {meeting.get('title')}")
+            
         return True
     except Exception as e:
         print(f"Error deleting meeting: {e}")

@@ -16,7 +16,8 @@
             <p style="color: var(--text-light); font-size: 1.1rem;">{{ group.description or 'No description provided' }}
             </p>
         </div>
-        {% if session.is_admin and group.name != 'Airex Lab' %}
+        {% if session.is_admin or group.lead_id == session.user_id %}
+        {% if group.name != 'Airex Lab' %}
         <div style="display: flex; gap: 0.5rem;">
             <a href="{{ url_for('edit_group', group_id=group.id) }}" class="btn btn-primary">Edit Group</a>
             <form method="POST" action="{{ url_for('delete_group_route', group_id=group.id) }}"
@@ -26,9 +27,10 @@
             </form>
         </div>
         {% endif %}
+        {% endif %}
     </div>
 
-    {% if session.is_admin %}
+    {% if session.is_admin or group.lead_id == session.user_id %}
     <div class="card" style="background-color: var(--bg-light); padding: 1.5rem; margin-bottom: 2rem;">
         <h3 style="color: var(--primary); margin-bottom: 1rem;">Add Member to Group</h3>
         <form method="POST" action="{{ url_for('add_member', group_id=group.id) }}">
@@ -55,7 +57,7 @@
                 <th>Email</th>
                 <th>Role</th>
                 <th>Joined Group</th>
-                {% if session.is_admin %}
+                {% if session.is_admin or group.lead_id == session.user_id %}
                 <th>Actions</th>
                 {% endif %}
             </tr>
@@ -63,7 +65,12 @@
         <tbody>
             {% for member in members %}
             <tr>
-                <td><strong>{{ member.name }}</strong></td>
+                <td>
+                    <strong>{{ member.name }}</strong>
+                    {% if member.id == group.lead_id %}
+                    <span class="badge badge-admin" style="margin-left: 0.5rem; font-size: 0.7rem;">Group Lead</span>
+                    {% endif %}
+                </td>
                 <td>{{ member.email }}</td>
                 <td>
                     {% if member.is_admin %}
@@ -73,8 +80,15 @@
                     {% endif %}
                 </td>
                 <td>{{ member.joined_at[:10] }}</td>
-                {% if session.is_admin %}
-                <td>
+                {% if session.is_admin or group.lead_id == session.user_id %}
+                <td style="display: flex; gap: 0.5rem;">
+                    {% if session.is_admin and member.id != group.lead_id %}
+                    <form method="POST"
+                        action="{{ url_for('set_group_lead_route', group_id=group.id, user_id=member.id) }}">
+                        <button type="submit" class="btn btn-secondary" style="padding: 0.5rem 1rem;">Set as
+                            Lead</button>
+                    </form>
+                    {% endif %}
                     <form method="POST" action="{{ url_for('remove_member', group_id=group.id, user_id=member.id) }}"
                         style="display: inline;" onsubmit="return confirm('Remove this member from the group?');">
                         <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem;">Remove</button>

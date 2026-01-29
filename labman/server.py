@@ -23,6 +23,7 @@ def check_allowed_hosts():
     if host not in allowed.split(','):
         abort(403)
 from labman.lib.auth import login_user, logout_user, require_login, require_admin, get_current_user
+from labman.lib.audit import get_audit_logs
 from labman.lib.users import create_user, get_all_users, update_user, delete_user, get_user_by_id, update_user_password, create_password_reset_token, verify_reset_token, update_user_notifications, get_latest_activation_token, resend_activation_email
 from labman.lib.users import update_user_profile, verify_email_change
 from labman.lib.groups import create_group, get_all_groups, get_all_groups_with_counts, add_user_to_group, remove_user_from_group, get_user_groups, get_group_members, get_group_by_id, update_group, delete_group
@@ -30,10 +31,7 @@ from labman.lib.meetings import create_meeting, get_all_meetings, update_meeting
 from labman.lib.content import upload_content, get_content, delete_content, get_content_by_id, check_content_access, get_content_by_share_link, get_content_by_group, update_content
 from labman.lib.inventory import add_inventory_item, get_all_inventory, update_inventory_item, delete_inventory_item
 from labman.lib.servers import add_server, get_all_servers, update_server, delete_server, get_server_by_id
-from labman.lib.research import get_research_plan, update_research_problem, add_research_task, update_research_task_status, delete_research_task, get_task_by_id, update_research_links, update_task_due_date
-from datetime import datetime, timedelta
-from dotenv import load_dotenv
-import os
+from labman.lib.research import get_research_plan, update_research_problem, add_research_task, update_research_task_status, delete_research_task, get_task_by_id, update_research_links, update_task_due_date, update_task_start_date
 
 load_dotenv()
 
@@ -104,41 +102,6 @@ def update_research_links_route():
         flash('Error updating research links', 'danger')
         
     return redirect(url_for('dashboard'))
-
-@app.route('/research/task/<int:task_id>/update_date', methods=['POST'])
-def update_task_date_route(task_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    # Ownership check
-    task = get_task_by_id(task_id)
-    if not task or task['user_id'] != session['user_id']:
-        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
-        
-    due_date = request.form.get('due_date')
-    if update_task_due_date(task_id, due_date):
-        return redirect(url_for('dashboard'))
-    else:
-        flash('Error updating due date', 'danger')
-        return redirect(url_for('dashboard'))
-
-@app.route('/research/task/<int:task_id>/update_start_date', methods=['POST'])
-def update_task_start_date_route(task_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    # Ownership check
-    task = get_task_by_id(task_id)
-    if not task or task['user_id'] != session['user_id']:
-        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
-        
-    start_date = request.form.get('start_date')
-    from labman.lib.research import update_task_start_date
-    if update_task_start_date(task_id, start_date):
-        return redirect(url_for('dashboard'))
-    else:
-        flash('Error updating start date', 'danger')
-        return redirect(url_for('dashboard'))
 
 @app.route('/logout')
 def logout():
@@ -428,14 +391,15 @@ def groups():
     return render_template('groups.html', groups=all_groups)
 
 @app.route('/groups/create', methods=['GET', 'POST'])
-@require_admin
+@require_login
 def create_group_route():
     if request.method == 'POST':
         name = request.form.get('name')
         description = request.form.get('description')
         parent_id = request.form.get('parent_id')
+        lead_id = session.get('user_id') # Current user is lead by default
         
-        if create_group(name, description, parent_id if parent_id else None):
+        if create_group(name, description, parent_id if parent_id else None, lead_id):
             flash('Group created successfully!', 'success')
             return redirect(url_for('groups'))
         else:
@@ -448,13 +412,18 @@ def create_group_route():
 
 
 @app.route('/groups/<int:group_id>/edit', methods=['GET', 'POST'])
-@require_admin
+@require_login
 def edit_group(group_id):
     group = get_group_by_id(group_id)
     if not group:
         flash('Group not found', 'error')
         return redirect(url_for('groups'))
     
+    # Check permissions: Admin or Group Lead
+    if not session.get('is_admin') and group.get('lead_id') != session.get('user_id'):
+        flash('Only admins or the group lead can edit this group', 'error')
+        return redirect(url_for('group_detail', group_id=group_id))
+        
     if group['name'] == os.getenv('LAB_NAME', 'Lab Manager'):
         flash('Cannot edit the default Lab group', 'error')
         return redirect(url_for('groups'))
@@ -463,15 +432,17 @@ def edit_group(group_id):
         name = request.form.get('name')
         description = request.form.get('description')
         parent_id = request.form.get('parent_id')
+        lead_id = request.form.get('lead_id') or group['lead_id'] # Allow changing lead
         
-        if update_group(group_id, name, description, parent_id if parent_id else None):
+        if update_group(group_id, name, description, parent_id if parent_id else None, lead_id):
             flash('Group updated successfully!', 'success')
             return redirect(url_for('groups'))
         else:
             flash('Failed to update group', 'error')
     
     all_groups = [g for g in get_all_groups() if g['id'] != group_id]
-    return render_template('group_form.html', group=group, groups=all_groups)
+    all_users = get_all_users()
+    return render_template('group_form.html', group=group, groups=all_groups, all_users=all_users)
 
 @app.route('/groups/<int:group_id>')
 @require_login
@@ -486,8 +457,13 @@ def group_detail(group_id):
     return render_template('group_detail.html', group=group, members=members, all_users=all_users)
 
 @app.route('/groups/<int:group_id>/add_member', methods=['POST'])
-@require_admin
+@require_login
 def add_member(group_id):
+    group = get_group_by_id(group_id)
+    if not session.get('is_admin') and (not group or group.get('lead_id') != session.get('user_id')):
+        flash('Unauthorized', 'error')
+        return redirect(url_for('group_detail', group_id=group_id))
+        
     user_id = request.form.get('user_id')
     if add_user_to_group(user_id, group_id):
         flash('Member added successfully!', 'success')
@@ -496,8 +472,13 @@ def add_member(group_id):
     return redirect(url_for('group_detail', group_id=group_id))
 
 @app.route('/groups/<int:group_id>/remove_member/<int:user_id>', methods=['POST'])
-@require_admin
+@require_login
 def remove_member(group_id, user_id):
+    group = get_group_by_id(group_id)
+    if not session.get('is_admin') and (not group or group.get('lead_id') != session.get('user_id')):
+        flash('Unauthorized', 'error')
+        return redirect(url_for('group_detail', group_id=group_id))
+        
     if remove_user_from_group(user_id, group_id):
         flash('Member removed successfully!', 'success')
     else:
@@ -506,13 +487,17 @@ def remove_member(group_id, user_id):
 
 
 @app.route('/groups/<int:group_id>/delete', methods=['POST'])
-@require_admin
+@require_login
 def delete_group_route(group_id):
     group = get_group_by_id(group_id)
     if not group:
         flash('Group not found', 'error')
         return redirect(url_for('groups'))
     
+    if not session.get('is_admin') and group.get('lead_id') != session.get('user_id'):
+        flash('Unauthorized', 'error')
+        return redirect(url_for('group_detail', group_id=group_id))
+        
     if group['name'] == os.getenv('LAB_NAME', 'Lab Manager'):
         flash('Cannot delete the default Lab group', 'error')
         return redirect(url_for('groups'))
@@ -986,8 +971,59 @@ def delete_research_task_route(task_id):
     else:
         flash('Failed to delete task', 'error')
     return redirect(url_for('dashboard'))
+@app.route('/dashboard/tasks/<int:task_id>/update-date', methods=['POST'])
+@require_login
+def update_task_date_route(task_id):
+    due_date = request.form.get('due_date')
+    if update_task_due_date(task_id, due_date):
+        flash('Due date updated!', 'success')
+    else:
+        flash('Failed to update due date', 'error')
+    return redirect(url_for('dashboard'))
 
+@app.route('/dashboard/tasks/<int:task_id>/update-start-date', methods=['POST'])
+@require_login
+def update_task_start_date_route(task_id):
+    start_date = request.form.get('start_date')
+    if update_task_start_date(task_id, start_date):
+        flash('Start date updated!', 'success')
+    else:
+        flash('Failed to update start date', 'error')
+    return redirect(url_for('dashboard'))
 
+@app.route('/history')
+@require_login
+def history_route():
+    user = get_current_user()
+    
+    # Filtering parameters (admin only)
+    filter_user_id = request.args.get('user_id')
+    filter_action = request.args.get('action')
+    
+    if user['is_admin']:
+        # Admins can see everything and filter
+        logs = get_audit_logs(limit=200, user_id=filter_user_id, action=filter_action)
+        all_users = get_all_users()
+        return render_template('audit_history.html', logs=logs, all_users=all_users, 
+                             filter_user_id=filter_user_id, filter_action=filter_action)
+    else:
+        # Regular users only see their own logs
+        logs = get_audit_logs(limit=100, user_id=user['id'])
+        return render_template('audit_history.html', logs=logs)
+
+@app.route('/groups/<int:group_id>/set-lead/<int:user_id>', methods=['POST'])
+@require_admin
+def set_group_lead_route(group_id, user_id):
+    group = get_group_by_id(group_id)
+    if not group:
+        flash('Group not found', 'error')
+        return redirect(url_for('groups'))
+    
+    if update_group(group_id, group['name'], group['description'], group['parent_id'], user_id):
+        flash('Group lead updated successfully', 'success')
+    else:
+        flash('Failed to update group lead', 'error')
+    return redirect(url_for('group_detail', group_id=group_id))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9000, debug=True)
