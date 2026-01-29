@@ -121,7 +121,7 @@
         document.getElementById('modalSentAt').textContent = formattedDate;
 
         // Set form actions
-        document.getElementById('resendForm').action = "/users/" + userId + "/resend-invitation";
+        document.getElementById('resendForm').action = "/users/" + userId + "/resend-activation";
         document.getElementById('deleteForm').action = "/users/" + userId + "/delete";
 
         modal.style.display = "block";
