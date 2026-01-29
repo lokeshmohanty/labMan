@@ -1129,9 +1129,9 @@ def history_route():
         return render_template('audit_history.html', logs=logs, all_users=all_users, 
                              filter_user_id=filter_user_id, filter_action=filter_action)
     else:
-        # Regular users only see their own logs
-        logs = get_audit_logs(limit=100, user_id=user['id'])
-        return render_template('audit_history.html', logs=logs)
+        # Regular users only see their own logs but can filter by action
+        logs = get_audit_logs(limit=100, user_id=user['id'], action=filter_action)
+        return render_template('audit_history.html', logs=logs, filter_action=filter_action)
 
 @app.route('/groups/<int:group_id>/set-lead/<int:user_id>', methods=['POST'])
 @require_admin

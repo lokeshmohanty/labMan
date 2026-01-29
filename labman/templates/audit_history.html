@@ -6,8 +6,8 @@
 <div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
         <h1 style="color: var(--primary); margin: 0;">Activity History</h1>
-        {% if all_users %}
         <form method="GET" style="display: flex; gap: 0.5rem; align-items: center;">
+            {% if all_users %}
             <select name="user_id" class="form-control" style="width: auto;">
                 <option value="">All Users</option>
                 {% for user in all_users %}
@@ -15,12 +15,12 @@
                     user.name }}</option>
                 {% endfor %}
             </select>
+            {% endif %}
             <input type="text" name="action" class="form-control" placeholder="Action (e.g. login)"
                 value="{{ filter_action or '' }}" style="width: auto;">
             <button type="submit" class="btn btn-primary">Filter</button>
             <a href="{{ url_for('history_route') }}" class="btn btn-secondary">Reset</a>
         </form>
-        {% endif %}
     </div>
 
     <table class="table">
