@@ -1,6 +1,6 @@
 [project]
 name = "ra-labMan"
-version = "0.1.1"
+version = "0.1.2"
 authors = [ { name="Lokesh Mohanty", email="lokesh1197@gmail.com" } ]
 description = "Academic Lab Management System"
 readme = "README.md"
