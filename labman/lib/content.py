@@ -14,12 +14,15 @@ def generate_share_link():
     """Generate a unique share link"""
     return secrets.token_urlsafe(32)
 
-def upload_content(file, title, description, uploaded_by, group_id=None, meeting_id=None, research_plan_id=None, access_level='group', upload_folder='uploads'):
-    """Upload a new content file"""
+def upload_content(file, title, description, uploaded_by, group_id=None, meeting_id=None, research_plan_id=None, access_level='group', upload_folder=None):
+    """Upload a new content file (access_level is deprecated, defaults to 'group')"""
     try:
         if not file or not allowed_file(file.filename):
             print("Invalid file or file type")
             return False
+        
+        if upload_folder is None:
+            upload_folder = os.path.join(os.getcwd(), 'data', 'uploads')
         
         filename = secure_filename(file.filename)
         
@@ -45,7 +48,8 @@ def upload_content(file, title, description, uploaded_by, group_id=None, meeting
         
         file_size = os.path.getsize(file_path)
         
-        share_link = generate_share_link() if access_level == 'link' else None
+        # Share link is no longer automatically generated as link access is deprecated
+        share_link = None
         
         cursor = execute_db(
             '''INSERT INTO content (title, description, filename, file_path, file_size, 
@@ -137,37 +141,23 @@ def get_content_by_share_link(share_link):
     return dict(content) if content else None
 
 def check_content_access(content_id, user_id=None):
-    """Check if user has access to content"""
-    content = get_content_by_id(content_id)
-    
-    if not content:
+    """Check if user has access to content. All logged-in users have access."""
+    if not user_id:
+        # Check if it was previously set as public (link access)
+        content = get_content_by_id(content_id)
+        if content and content['access_level'] == 'link':
+            return True
         return False
     
-    # Public content (link access)
-    if content['access_level'] == 'link':
-        return True
-    
-    # Allow access to all registered users
-    if user_id:
-        return True
-
-    return False
+    # All logged-in users can access any content
+    return True
 
 def update_content(content_id, title, description, group_id=None, meeting_id=None, research_plan_id=None, access_level='group'):
-    """Update content metadata"""
+    """Update content metadata (access_level is deprecated)"""
     try:
-        # If changing to link access, generate share link
-        share_link = None
-        if access_level == 'link':
-            existing = get_content_by_id(content_id)
-            if existing:
-                share_link = existing.get('share_link') or generate_share_link()
-            else:
-                share_link = generate_share_link()
-        
         execute_db(
-            'UPDATE content SET title = ?, description = ?, group_id = ?, meeting_id = ?, research_plan_id = ?, access_level = ?, share_link = ? WHERE id = ?',
-            (title, description, group_id, meeting_id, research_plan_id, access_level, share_link, content_id)
+            'UPDATE content SET title = ?, description = ?, group_id = ?, meeting_id = ?, research_plan_id = ? WHERE id = ?',
+            (title, description, group_id, meeting_id, research_plan_id, content_id)
         )
         return True
     except Exception as e:

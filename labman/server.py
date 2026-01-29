@@ -37,7 +37,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY')
-app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'data', 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -693,11 +693,10 @@ def upload_content_route():
         description = request.form.get('description')
         group_id = request.form.get('group_id')
         meeting_id = request.form.get('meeting_id')
-        access_level = request.form.get('access_level')
         
         user = get_current_user()
         
-        if file and upload_content(file, title, description, user['id'], group_id, meeting_id, access_level, app.config['UPLOAD_FOLDER']):
+        if file and upload_content(file, title, description, user['id'], group_id, meeting_id, upload_folder=app.config['UPLOAD_FOLDER']):
             flash('Content uploaded successfully!', 'success')
             return redirect(url_for('content'))
         else:
@@ -706,7 +705,22 @@ def upload_content_route():
     user = get_current_user()
     user_groups = get_user_groups(user['id'])
     meetings = get_all_meetings()
-    return render_template('content_form.html', groups=user_groups, meetings=meetings)
+    
+    # Pre-select meeting if meeting_id is provided in URL
+    selected_meeting_id = request.args.get('meeting_id')
+    selected_group_id = None
+    
+    if selected_meeting_id:
+        # Also find the group associated with this meeting to pre-select it
+        meeting = next((m for m in meetings if str(m['id']) == str(selected_meeting_id)), None)
+        if meeting:
+            selected_group_id = meeting['group_id']
+            
+    return render_template('content_form.html', 
+                         groups=user_groups, 
+                         meetings=meetings, 
+                         selected_meeting_id=selected_meeting_id,
+                         selected_group_id=selected_group_id)
 
 @app.route('/content/<int:content_id>/edit', methods=['GET', 'POST'])
 @require_login
@@ -727,9 +741,8 @@ def edit_content(content_id):
         description = request.form.get('description')
         group_id = request.form.get('group_id')
         meeting_id = request.form.get('meeting_id')
-        access_level = request.form.get('access_level')
         
-        if update_content(content_id, title, description, group_id, meeting_id, access_level):
+        if update_content(content_id, title, description, group_id, meeting_id):
             flash('Content updated successfully!', 'success')
             return redirect(url_for('content'))
         else:
@@ -774,7 +787,7 @@ def download_content(content_id):
         flash('Access denied', 'error')
         return redirect(url_for('content'))
     
-    download_name = content_item.get('original_filename') or content_item['filename']
+    download_name = content_item['filename']
     return send_file(content_item['file_path'], as_attachment=True, download_name=download_name)
 
 @app.route('/share/<share_link>')

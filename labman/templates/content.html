@@ -4,13 +4,15 @@
 
 {% block content %}
 <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
         <h1 style="color: var(--primary);">Content Library</h1>
         <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
             <select onchange="filterByGroup(this.value)" class="form-control" style="width: auto; min-width: 200px;">
                 <option value="">All Groups</option>
                 {% for group in groups %}
-                <option value="{{ group.id }}" {% if request.args.get('group_id') == group.id|string %}selected{% endif %}>
+                <option value="{{ group.id }}" {% if request.args.get('group_id')==group.id|string %}selected{% endif
+                    %}>
                     {{ group.name }}
                 </option>
                 {% endfor %}
@@ -18,7 +20,7 @@
             <a href="{{ url_for('upload_content_route') }}" class="btn btn-primary">Upload Content</a>
         </div>
     </div>
-    
+
     <table class="table">
         <thead>
             <tr>
@@ -27,7 +29,6 @@
                 <th>Group</th>
                 <th>Meeting</th>
                 <th>Uploaded By</th>
-                <th>Access</th>
                 <th>Size</th>
                 <th>Actions</th>
             </tr>
@@ -47,7 +48,7 @@
                 <td>
                     {% if content.meeting_title %}
                     <a href="{{ url_for('meeting_detail', meeting_id=content.meeting_id) }}"
-                       style="color: var(--primary); text-decoration: none;">
+                        style="color: var(--primary); text-decoration: none;">
                         {{ content.meeting_title }}
                     </a>
                     {% else %}
@@ -55,78 +56,38 @@
                     {% endif %}
                 </td>
                 <td>{{ content.uploaded_by_name }}</td>
-                <td>
-                    {% if content.access_level == 'link' %}
-                    <span class="badge" style="background-color: var(--warning); color: white;">Public Link</span>
-                    {% else %}
-                    <span class="badge badge-user">Group</span>
-                    {% endif %}
-                </td>
                 <td>{{ "%.2f"|format(content.file_size / 1024 / 1024) }} MB</td>
                 <td>
-                    <a href="{{ url_for('download_content', content_id=content.id) }}" 
-                       class="btn btn-secondary" style="padding: 0.5rem 1rem;">Download</a>
+                    <a href="{{ url_for('download_content', content_id=content.id) }}" class="btn btn-secondary"
+                        style="padding: 0.5rem 1rem;">Download</a>
                     {% if session.is_admin or content.uploaded_by == session.user_id %}
-                    <a href="{{ url_for('edit_content', content_id=content.id) }}" 
-                       class="btn btn-primary" style="padding: 0.5rem 1rem; margin-left: 0.5rem;">Edit</a>
-                    <form method="POST" action="{{ url_for('delete_content_route', content_id=content.id) }}" 
-                          style="display: inline; margin-left: 0.5rem;"
-                          onsubmit="return confirm('Are you sure you want to delete this content?');">
+                    <a href="{{ url_for('edit_content', content_id=content.id) }}" class="btn btn-primary"
+                        style="padding: 0.5rem 1rem; margin-left: 0.5rem;">Edit</a>
+                    <form method="POST" action="{{ url_for('delete_content_route', content_id=content.id) }}"
+                        style="display: inline; margin-left: 0.5rem;"
+                        onsubmit="return confirm('Are you sure you want to delete this content?');">
                         <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem;">Delete</button>
                     </form>
-                    {% endif %}
-                    {% if content.access_level == 'link' and content.share_link %}
-                    <button onclick="copyShareLink('{{ request.url_root }}share/{{ content.share_link }}')"
-                            class="btn" style="padding: 0.5rem 1rem; margin-left: 0.5rem; background-color: var(--accent); color: white;">
-                        Copy Link
-                    </button>
                     {% endif %}
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-    
+
     {% if not contents %}
     <p style="text-align: center; color: var(--text-light); padding: 2rem;">No content available.</p>
     {% endif %}
 </div>
 
 <script>
-function filterByGroup(groupId) {
-    if (groupId) {
-        window.location.href = '{{ url_for("content") }}?group_id=' + groupId;
-    } else {
-        window.location.href = '{{ url_for("content") }}';
+    function filterByGroup(groupId) {
+        if (groupId) {
+            window.location.href = '{{ url_for("content") }}?group_id=' + groupId;
+        } else {
+            window.location.href = '{{ url_for("content") }}';
+        }
     }
-}
 
-function copyShareLink(url) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(function() {
-            alert('Link copied to clipboard!');
-        }, function(err) {
-            fallbackCopy(url);
-        });
-    } else {
-        fallbackCopy(url);
-    }
-}
-
-function fallbackCopy(url) {
-    const textArea = document.createElement('textarea');
-    textArea.value = url;
-    textArea.style.position = 'fixed';
-    textArea.style.left = '-999999px';
-    document.body.appendChild(textArea);
-    textArea.select();
-    try {
-        document.execCommand('copy');
-        alert('Link copied to clipboard!');
-    } catch (err) {
-        prompt('Copy this link:', url);
-    }
-    document.body.removeChild(textArea);
-}
 </script>
 {% endblock %}
