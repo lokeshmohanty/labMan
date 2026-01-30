@@ -5,10 +5,12 @@ from labman.lib.data import get_db, query_db, execute_db
 from labman.lib.auth import check_user_group_access
 from labman.lib.helpers import get_lab_members
 from labman.lib.email_queue import email_queue
+from labman.lib.validators import validate_filename, validate_file_extension, sanitize_text
 
 def allowed_file(filename):
-    """Check if file extension is allowed - allowing all for now"""
-    return True
+    """Check if file extension is allowed"""
+    is_valid, _, _ = validate_file_extension(filename)
+    return is_valid
 
 def generate_share_link():
     """Generate a unique share link"""
@@ -17,14 +19,36 @@ def generate_share_link():
 def upload_content(file, title, description, uploaded_by, group_id=None, meeting_id=None, research_plan_id=None, access_level='group', upload_folder=None):
     """Upload a new content file (access_level is deprecated, defaults to 'group')"""
     try:
-        if not file or not allowed_file(file.filename):
-            print("Invalid file or file type")
+        if not file or not file.filename:
+            print("No file provided")
             return False
+        
+        # Validate and sanitize filename
+        is_valid, sanitized_filename, error = validate_filename(file.filename)
+        if not is_valid:
+            print(f"Invalid filename: {error}")
+            return False
+        
+        # Validate file extension
+        is_valid, extension, error = validate_file_extension(sanitized_filename)
+        if not is_valid:
+            print(f"Invalid file type: {error}")
+            return False
+        
+        # Sanitize title and description
+        is_valid, sanitized_title, error = sanitize_text(title, max_length=200)
+        if not is_valid:
+            print(f"Invalid title: {error}")
+            return False
+        
+        is_valid, sanitized_description, error = sanitize_text(description, max_length=1000)
+        if not is_valid:
+            sanitized_description = ""  # Allow empty description
         
         if upload_folder is None:
             upload_folder = os.path.join(os.getcwd(), 'data', 'uploads')
         
-        filename = secure_filename(file.filename)
+        filename = secure_filename(sanitized_filename)
         
         save_path = upload_folder
         if group_id:
@@ -55,7 +79,7 @@ def upload_content(file, title, description, uploaded_by, group_id=None, meeting
             '''INSERT INTO content (title, description, filename, file_path, file_size, 
                uploaded_by, group_id, meeting_id, research_plan_id, access_level, share_link) 
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-            (title, description, filename, file_path, file_size, uploaded_by, 
+            (sanitized_title, sanitized_description, filename, file_path, file_size, uploaded_by, 
              group_id, meeting_id, research_plan_id, access_level, share_link)
         )
         content_id = cursor.lastrowid
@@ -78,7 +102,7 @@ def upload_content(file, title, description, uploaded_by, group_id=None, meeting
         
         # Log action
         from labman.lib.audit import log_action
-        log_action(uploaded_by, "uploaded content", f"Title: {title}")
+        log_action(uploaded_by, "uploaded content", f"Title: {sanitized_title}")
         
         return True
     except Exception as e:

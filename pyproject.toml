@@ -29,6 +29,10 @@ dependencies = [
     "click>=8.1.7",
     "gunicorn>=23.0.0",
     "python-crontab>=3.2.0",
+    "flask-limiter>=3.5.0",
+    "flask-talisman>=1.1.0",
+    "email-validator>=2.1.0",
+    "bleach>=6.1.0",
 ]
 
 [project.scripts]

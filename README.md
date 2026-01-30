@@ -135,6 +135,7 @@ Default Login (first run):
 - **Inventory**: Equipment and server tracking.
 - **Email Notifications**: Automatic notifications with retry mechanism and background queue.
 - **CLI Tools**: Built-in server management, logging, and backup.
+- **Security**: Comprehensive protection against SQL injection, XSS, CSRF, brute force attacks, and more.
 
 ![Dashboard](./assets/dashboard.png)
 ![Meetings](./assets/meetings.png)
@@ -147,6 +148,65 @@ The system includes a robust email notification system with:
 - **Background Queue**: Mass notifications (meetings, content) are sent asynchronously to avoid blocking
 - **Failure Logging**: Failed emails are logged to database for manual review and retry
 - **Graceful Degradation**: Application continues to work even if email server is unavailable
+
+## Security Features
+
+The application includes comprehensive security measures:
+
+### Protection Against Common Vulnerabilities
+- ✅ **SQL Injection**: All queries use parameterized statements
+- ✅ **XSS (Cross-Site Scripting)**: Input validation and sanitization
+- ✅ **CSRF (Cross-Site Request Forgery)**: Token-based protection
+- ✅ **Brute Force Attacks**: Rate limiting on sensitive endpoints
+- ✅ **Session Hijacking**: Secure cookies with HttpOnly, Secure, and SameSite flags
+- ✅ **Malicious File Uploads**: Whitelist-based file type validation
+
+### Security Features
+- **Rate Limiting**: 
+  - Login: 5 attempts per 15 minutes
+  - Password reset: 3 attempts per hour
+  - Default: 200 requests/day, 50/hour
+- **Input Validation**: Email, filename, file extension, password strength
+- **Session Security**: 60-minute timeout, automatic regeneration on login
+- **Security Headers**: CSP, HSTS, X-Frame-Options (configurable)
+- **Password Requirements**: Minimum 6 characters with letters and numbers
+
+### Security Configuration
+
+Add these to your `.env` file:
+
+```bash
+# Session Security
+SESSION_COOKIE_SECURE=False         # Set to True in production with HTTPS
+SESSION_TIMEOUT_MINUTES=60          # Auto-logout after inactivity
+
+# CSRF Protection
+CSRF_ENABLED=True                   # Enable CSRF validation
+
+# Rate Limiting
+RATE_LIMIT_STORAGE_URL=memory://    # Use redis://localhost:6379 in production
+
+# Security Headers (Flask-Talisman)
+TALISMAN_ENABLED=False              # Set to True in production with HTTPS
+```
+
+For complete security documentation, see:
+- `SECURITY.md` - Configuration and best practices
+- `SECURITY_AUDIT.md` - Detailed security audit report
+
+### Quick Security Reference
+
+**For Users:**
+- Password: 6+ characters with letters AND numbers
+- Rate limits: 5 login attempts per 15 minutes
+- Session timeout: 60 minutes of inactivity
+- Blocked files: .exe, .sh, .bat (executables)
+
+**For Admins:**
+- Development: `SESSION_COOKIE_SECURE=False`, `TALISMAN_ENABLED=False`
+- Production: `SESSION_COOKIE_SECURE=True`, `TALISMAN_ENABLED=True`
+- Testing: `pytest labman/tests/test_security.py -v`
+- See `SECURITY.md` for complete deployment checklist
 
 # Development
 
