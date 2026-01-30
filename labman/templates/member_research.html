@@ -63,8 +63,8 @@
             {% endif %}
 
             <script>
-                document.getElementById('problem-content').innerHTML = marked.parse(`{{ plan.problem_statement }}` || '*No research problem defined yet.*');
-                document.getElementById('progress-content').innerHTML = marked.parse(`{{ plan.research_progress }}` || '*No progress updates yet.*');
+                document.getElementById('problem-content').innerHTML = marked.parse({{ (plan.problem_statement if plan.problem_statement else '') | tojson }} || '*No research problem defined yet.*');
+                document.getElementById('progress-content').innerHTML = marked.parse({{ (plan.research_progress if plan.research_progress else '') | tojson }} || '*No progress updates yet.*');
             </script>
         </div>
 
@@ -194,11 +194,11 @@
 <script>
     // Initial Render for Comments
     document.addEventListener('DOMContentLoaded', () => {
-        const commentsText = document.getElementById('comments-textarea') ? document.getElementById('comments-textarea').value : '{{ plan.comments if plan.comments else '' }}';
-        const viewerElement = document.getElementById('comments-viewer');
-        if (viewerElement) {
-            viewerElement.innerHTML = marked.parse(commentsText || '*No comments yet.*');
-        }
+        const commentsText = document.getElementById('comments-textarea') ? document.getElementById('comments-textarea').value : {{ (plan.comments if plan.comments else '') | tojson }};
+    const viewerElement = document.getElementById('comments-viewer');
+    if (viewerElement) {
+        viewerElement.innerHTML = marked.parse(commentsText || '*No comments yet.*');
+    }
     });
 
     function toggleCommentsEdit() {
