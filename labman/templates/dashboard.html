@@ -237,11 +237,11 @@
 
             <script>
                 document.addEventListener('DOMContentLoaded', () => {
-                    const commentsText = `{{ research_plan.comments if research_plan.comments else '' }}`;
-                    const commentsElement = document.getElementById('comments-content');
-                    if (commentsElement) {
-                        commentsElement.innerHTML = marked.parse(commentsText || '*No comments yet.*');
-                    }
+                    const commentsText = {{ (research_plan.comments if research_plan.comments else '') | tojson }};
+                const commentsElement = document.getElementById('comments-content');
+                if (commentsElement) {
+                    commentsElement.innerHTML = marked.parse(commentsText || '*No comments yet.*');
+                }
                 });
             </script>
         </div>

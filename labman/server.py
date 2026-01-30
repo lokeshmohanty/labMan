@@ -167,13 +167,13 @@ def member_research(user_id):
     
     if current_user['is_admin']:
         can_edit_comments = True
-    else:
-        # Check if current user is a lead of any group that the target user belongs to
-        target_user_groups = get_user_groups(user_id)
-        for group in target_user_groups:
-            if group.get('lead_id') == current_user['id']:
-                can_edit_comments = True
-                break
+    # else:
+    #     # Check if current user is a lead of any group that the target user belongs to
+    #     target_user_groups = get_user_groups(user_id)
+    #     for group in target_user_groups:
+    #         if group.get('lead_id') == current_user['id']:
+    #             can_edit_comments = True
+    #             break
     
     return render_template('member_research.html', target_user=target_user, plan=plan, 
                          timeline_start=timeline_start, timeline_end=timeline_end,
