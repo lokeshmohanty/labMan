@@ -56,7 +56,7 @@
                 {% for tag in available_tags %}
                 <button type="button" class="btn btn-outline tag-item" onclick="toggleTag('{{ tag }}')"
                     data-tag="{{ tag }}"
-                    style="border: 1px solid var(--border); background-color: white; color: var(--text-dark); transition: all 0.2s;">
+                    style="border: 1px solid var(--border-primary); background-color: var(--bg-secondary); color: var(--text-primary); transition: all 0.2s;">
                     {{ tag }}
                 </button>
                 {% endfor %}
@@ -145,7 +145,7 @@
                     btn.className = 'btn btn-outline tag-item';
                     btn.onclick = function () { toggleTag(tagName) };
                     btn.dataset.tag = tagName;
-                    btn.style.cssText = 'border: 1px solid var(--border); background-color: white; color: var(--text-dark); transition: all 0.2s;';
+                    btn.style.cssText = 'border: 1px solid var(--border-primary); background-color: var(--bg-secondary); color: var(--text-primary); transition: all 0.2s;';
                     btn.textContent = tagName;
                     container.appendChild(btn);
 
@@ -170,7 +170,7 @@
                         btn.style.borderColor = 'var(--primary)';
                     } else {
                         btn.style.backgroundColor = 'white';
-                        btn.style.color = 'var(--text-dark)';
+                        btn.style.color = 'var(--text-primary)';
                         btn.style.borderColor = 'var(--border)';
                     }
                 });

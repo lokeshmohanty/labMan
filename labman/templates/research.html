@@ -8,19 +8,19 @@
 
     {% macro render_group(group) %}
     <div
-        style="border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; background-color: var(--bg-white);">
+        style="border: 1px solid var(--border-primary); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; background-color: var(--bg-secondary);">
         <h2 style="color: var(--primary); margin-bottom: 0.5rem; font-size: 1.5rem;">
             <a href="{{ url_for('group_detail', group_id=group.id) }}" style="text-decoration: none; color: inherit;">
                 {{ group.name }}
             </a>
         </h2>
         {% if group.description %}
-        <p style="color: var(--text-light); margin-bottom: 1rem;">{{ group.description }}</p>
+        <p style="color: var(--text-secondary); margin-bottom: 1rem;">{{ group.description }}</p>
         {% endif %}
 
         {% if group.members %}
         <div style="margin-bottom: 1rem;">
-            <h4 style="color: var(--text-dark); margin-bottom: 0.5rem; font-size: 1rem;">Members:</h4>
+            <h4 style="color: var(--text-primary); margin-bottom: 0.5rem; font-size: 1rem;">Members:</h4>
             <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                 {% for member in group.members %}
                 <a href="{{ url_for('member_research', user_id=member.id) }}" style="text-decoration: none;">
@@ -51,7 +51,7 @@
     {{ render_group(group) }}
     {% endfor %}
     {% else %}
-    <p style="text-align: center; color: var(--text-light); padding: 2rem;">No research groups found.</p>
+    <p style="text-align: center; color: var(--text-secondary); padding: 2rem;">No research groups found.</p>
     {% endif %}
 </div>
 {% endblock %}

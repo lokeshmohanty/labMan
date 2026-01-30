@@ -78,7 +78,7 @@
             <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <h3 style="color: var(--text-dark); margin: 0;">Research Problem</h3>
+                <h3 style="color: var(--text-primary); margin: 0;">Research Problem</h3>
                 <div id="problem-actions">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="toggleEdit('problem')"
                         id="problem-edit-btn">Edit</button>
@@ -93,7 +93,7 @@
 
             <form method="POST" action="{{ url_for('update_research_problem_route') }}" id="problem-form">
                 <div id="problem-viewer"
-                    style="padding: 1.5rem; border: 1px solid var(--border); border-radius: 4px; background: white; min-height: 200px; margin-bottom: 1rem;">
+                    style="padding: 1.5rem; border: 1px solid var(--border-primary); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); min-height: 200px; margin-bottom: 1rem;">
                     <!-- Content rendered via JS -->
                 </div>
 
@@ -107,7 +107,7 @@
 
             <div
                 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; margin-top: 2rem;">
-                <h3 style="color: var(--text-dark); margin: 0;">Research Progress</h3>
+                <h3 style="color: var(--text-primary); margin: 0;">Research Progress</h3>
                 <div id="progress-actions">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="toggleEdit('progress')"
                         id="progress-edit-btn">Edit</button>
@@ -122,7 +122,7 @@
 
             <form method="POST" action="{{ url_for('update_research_problem_route') }}" id="progress-form">
                 <div id="progress-viewer"
-                    style="padding: 1.5rem; border: 1px solid var(--border); border-radius: 4px; background: white; min-height: 300px; margin-bottom: 1rem;">
+                    style="padding: 1.5rem; border: 1px solid var(--border-primary); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); min-height: 300px; margin-bottom: 1rem;">
                     <!-- Content rendered via JS -->
                 </div>
 
@@ -170,7 +170,7 @@
             </script>
 
             <div style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 1rem;">
-                <h3 style="color: var(--text-dark); margin-bottom: 0.5rem;">Related Research Documents</h3>
+                <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Related Research Documents</h3>
                 <div style="margin-bottom: 1rem;">
                     {% if research_plan.documents %}
                     <ul style="list-style: none; padding: 0;">
@@ -214,7 +214,7 @@
                 </form>
             </div>
 
-            <h3 style="color: var(--text-dark); margin-bottom: 0.5rem; margin-top: 2rem;">Project Links</h3>
+            <h3 style="color: var(--text-primary); margin-bottom: 0.5rem; margin-top: 2rem;">Project Links</h3>
             <form method="POST" action="{{ url_for('update_research_links_route') }}">
                 <div class="form-group">
                     <label style="display: block; margin-bottom: 0.25rem;">GitHub Repository</label>
@@ -230,9 +230,9 @@
             </form>
 
             <!-- Comments (Read-only) -->
-            <h3 style="color: var(--text-dark); margin-bottom: 0.5rem; margin-top: 2rem;">Comments</h3>
+            <h3 style="color: var(--text-primary); margin-bottom: 0.5rem; margin-top: 2rem;">Comments</h3>
             <div id="comments-content"
-                style="background-color: white; padding: 1.5rem; border-radius: 4px; border: 1px solid var(--border); min-height: 100px;">
+                style="background-color: var(--bg-secondary); color: var(--text-primary); padding: 1.5rem; border-radius: 4px; border: 1px solid var(--border-primary); min-height: 100px;">
             </div>
 
             <script>
@@ -248,7 +248,7 @@
 
         <!-- Tasks Timeline -->
         <div>
-            <h3 style="color: var(--text-dark); margin-bottom: 0.5rem;">Tasks Timeline</h3>
+            <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Tasks Timeline</h3>
 
             <form method="POST" action="{{ url_for('add_research_task_route') }}"
                 style="margin-bottom: 1rem; display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 0.5rem; align-items: end;">
@@ -325,14 +325,14 @@
         <ul style="list-style: none; padding: 0; max-height: 400px; overflow-y: auto;">
             {% for task in research_plan.tasks %}
             <li
-                style="background-color: var(--bg-light); padding: 0.75rem; border-radius: 4px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                style="background-color: var(--bg-hover); padding: 0.75rem; border-radius: 8px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-primary);">
                 <div>
                     <div
-                        style="font-weight: bold; {% if task.status == 'completed' %}text-decoration: line-through; color: var(--text-light);{% endif %}">
+                        style="font-weight: bold; {% if task.status == 'completed' %}text-decoration: line-through; color: var(--text-secondary);{% endif %}">
                         {{ task.task_name }}
                     </div>
                     <div
-                        style="font-size: 0.85rem; color: var(--text-light); display: flex; align-items: center; gap: 0.5rem;">
+                        style="font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.5rem;">
                         <!-- Start Date Form -->
                         <span style="display: flex; align-items: center; gap: 0.25rem;">
                             <span>Start:</span>
@@ -340,11 +340,11 @@
                                 style="display: inline;">
                                 <input type="date" name="start_date" value="{{ task.start_date or '' }}"
                                     onchange="this.form.submit()"
-                                    style="padding: 0.1rem; border: 1px solid var(--border); border-radius: 3px; font-size: 0.8rem;">
+                                    style="padding: 0.1rem; border: 1px solid var(--border-primary); border-radius: 3px; font-size: 0.8rem; background-color: var(--bg-secondary); color: var(--text-primary);">
                             </form>
                         </span>
 
-                        <span style="color: var(--border);">|</span>
+                        <span style="color: var(--border-secondary);">|</span>
 
                         <!-- Due Date Form -->
                         <span style="display: flex; align-items: center; gap: 0.25rem;">
@@ -353,7 +353,7 @@
                                 style="display: inline;">
                                 <input type="date" name="due_date" value="{{ task.due_date or '' }}"
                                     onchange="this.form.submit()"
-                                    style="padding: 0.1rem; border: 1px solid var(--border); border-radius: 3px; font-size: 0.8rem;">
+                                    style="padding: 0.1rem; border: 1px solid var(--border-primary); border-radius: 3px; font-size: 0.8rem; background-color: var(--bg-secondary); color: var(--text-primary);">
                             </form>
                         </span>
                     </div>
@@ -361,7 +361,7 @@
                 <div style="display: flex; gap: 0.25rem; align-items: center;">
                     <form method="POST" action="{{ url_for('update_research_task_route', task_id=task.id) }}">
                         <select name="status" onchange="this.form.submit()"
-                            style="padding: 0.25rem; border-radius: 4px; border: 1px solid var(--border);">
+                            style="padding: 0.25rem; border-radius: 4px; border: 1px solid var(--border-primary); background-color: var(--bg-secondary); color: var(--text-primary);">
                             <option value="pending" {% if task.status=='pending' %}selected{% endif %}>Pending
                             </option>
                             <option value="in_progress" {% if task.status=='in_progress' %}selected{% endif %}>In
@@ -380,7 +380,7 @@
             {% endfor %}
         </ul>
         {% else %}
-        <p style="color: var(--text-light);">No tasks added yet.</p>
+        <p style="color: var(--text-secondary);">No tasks added yet.</p>
         {% endif %}
     </div>
 </div>
