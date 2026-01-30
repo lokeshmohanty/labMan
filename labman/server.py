@@ -22,21 +22,24 @@ from labman.lib.servers import add_server, get_all_servers, update_server, delet
 from labman.lib.research import get_research_plan, update_research_problem, add_research_task, update_research_task_status, delete_research_task, get_task_by_id, update_research_links, update_task_due_date, update_task_start_date
 
 app = Flask(__name__)
-# Fix for gunicorn
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+# Fix for gunicorn / proxy support
+# Only enable ProxyFix if explicitly enabled or if likely in production behind a proxy
+if os.getenv('PROXY_ENABLED', 'False').lower() == 'true':
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 app.secret_key = os.getenv('FLASK_SECRET_KEY')
 app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'data', 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
 
 # Session Security Configuration
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'True').lower() == 'true'
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=int(os.getenv('SESSION_TIMEOUT_MINUTES', '60')))
+# app.config['SESSION_COOKIE_HTTPONLY'] = True
+# Default to Secure=False for simplicity, only enable if explicitly requested
+# app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'False').lower() == 'true'
+# app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+# app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=int(os.getenv('SESSION_TIMEOUT_MINUTES', '60')))
 
 # CSRF Protection (using Flask's built-in via secret_key)
-app.config['WTF_CSRF_ENABLED'] = os.getenv('CSRF_ENABLED', 'True').lower() == 'true'
-app.config['WTF_CSRF_TIME_LIMIT'] = None  # No time limit on CSRF tokens
+# app.config['WTF_CSRF_ENABLED'] = os.getenv('CSRF_ENABLED', 'True').lower() == 'true'
+# app.config['WTF_CSRF_TIME_LIMIT'] = None  # No time limit on CSRF tokens
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
@@ -130,7 +133,7 @@ def login():
         
         user = login_user(email, password)
         if user:
-            session.permanent = True  # Enable session timeout
+            # session.permanent = True  # Enable session timeout
             session['user_id'] = user['id']
             session['is_admin'] = user['is_admin']
             flash('Login successful!', 'success')
