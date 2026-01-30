@@ -81,14 +81,7 @@
                 </td>
                 <td>{{ member.joined_at[:10] }}</td>
                 {% if session.is_admin or group.lead_id == session.user_id %}
-                <td style="display: flex; gap: 0.5rem;">
-                    {% if session.is_admin and member.id != group.lead_id %}
-                    <form method="POST"
-                        action="{{ url_for('set_group_lead_route', group_id=group.id, user_id=member.id) }}">
-                        <button type="submit" class="btn btn-secondary" style="padding: 0.5rem 1rem;">Set as
-                            Lead</button>
-                    </form>
-                    {% endif %}
+                <td>
                     <form method="POST" action="{{ url_for('remove_member', group_id=group.id, user_id=member.id) }}"
                         style="display: inline;" onsubmit="return confirm('Remove this member from the group?');">
                         <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem;">Remove</button>

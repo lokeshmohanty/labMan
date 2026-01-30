@@ -27,7 +27,7 @@ from labman.lib.audit import get_audit_logs
 from labman.lib.users import create_user, get_all_users, update_user, delete_user, get_user_by_id, update_user_password, create_password_reset_token, verify_reset_token, update_user_notifications, get_latest_activation_token, resend_activation_email
 from labman.lib.users import update_user_profile, verify_email_change
 from labman.lib.groups import create_group, get_all_groups, get_all_groups_with_counts, add_user_to_group, remove_user_from_group, get_user_groups, get_group_members, get_group_by_id, update_group, delete_group
-from labman.lib.meetings import create_meeting, get_all_meetings, update_meeting, delete_meeting, get_meeting_by_id, get_meetings_this_week, get_meetings_by_month, record_meeting_response, get_meeting_responses, get_meetings_by_tags, format_meeting_datetime, get_all_tags
+from labman.lib.meetings import create_meeting, get_all_meetings, update_meeting, delete_meeting, get_meeting_by_id, get_meetings_this_week, get_meetings_by_month, record_meeting_response, get_meeting_responses, get_meetings_by_tags, format_meeting_datetime, get_all_tags, generate_calendar_links
 from labman.lib.content import upload_content, get_content, delete_content, get_content_by_id, check_content_access, get_content_by_share_link, get_content_by_group, update_content
 from labman.lib.inventory import add_inventory_item, get_all_inventory, update_inventory_item, delete_inventory_item
 from labman.lib.servers import add_server, get_all_servers, update_server, delete_server, get_server_by_id
@@ -719,7 +719,10 @@ def meeting_detail(meeting_id):
         flash('Meeting not found', 'error')
         return redirect(url_for('meetings'))
     
-    # Format datetime
+    # Generate calendar links BEFORE formatting datetime (needs raw datetime)
+    calendar_links = generate_calendar_links(meeting)
+    
+    # Format datetime for display
     meeting['meeting_time'] = format_meeting_datetime(meeting['meeting_time'])
     
     # Check if user can edit
@@ -734,7 +737,8 @@ def meeting_detail(meeting_id):
     
     contents = get_content(meeting_id=meeting_id)
     responses = get_meeting_responses(meeting_id)
-    return render_template('meeting_detail.html', meeting=meeting, contents=contents, responses=responses, can_edit=can_edit, is_participant=is_participant)
+    
+    return render_template('meeting_detail.html', meeting=meeting, contents=contents, responses=responses, can_edit=can_edit, is_participant=is_participant, calendar_links=calendar_links)
 
 @app.route('/meetings/<int:meeting_id>/respond', methods=['POST'])
 @require_login
@@ -777,6 +781,29 @@ def update_meeting_summary_route(meeting_id):
         flash('Failed to update summary', 'error')
     
     return redirect(url_for('meeting_detail', meeting_id=meeting_id))
+
+@app.route('/meetings/<int:meeting_id>/download.ics')
+@require_login
+def download_meeting_ics(meeting_id):
+    from labman.lib.ics_generator import generate_ics_file
+    from flask import make_response
+    
+    meeting = get_meeting_by_id(meeting_id)
+    if not meeting:
+        flash('Meeting not found', 'error')
+        return redirect(url_for('meetings'))
+    
+    ics_content = generate_ics_file(meeting)
+    if not ics_content:
+        flash('Failed to generate calendar file', 'error')
+        return redirect(url_for('meeting_detail', meeting_id=meeting_id))
+    
+    # Create response with ICS file
+    response = make_response(ics_content)
+    response.headers['Content-Type'] = 'text/calendar; charset=utf-8'
+    response.headers['Content-Disposition'] = f'attachment; filename=meeting_{meeting_id}.ics'
+    return response
+
 
 # Content Management
 @app.route('/content')
