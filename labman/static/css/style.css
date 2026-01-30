@@ -1,39 +1,164 @@
-/* LabMan - Unified Stylesheet */
+/* LabMan - Unified Stylesheet with Centralized Theming */
 
-/* CSS Variables - Color Palette */
-:root {
-    /* Original Darker Palette */
-    --primary: #8B4513; /* SaddleBrown */
-    --primary-light: #A0522D; /* Sienna */
-    --primary-dark: #654321; /* Dark Brown */
+/* ============================================
+   CSS Variables - Centralized Theme System
+   ============================================ */
 
-    --secondary: #D2691E; /* Chocolate */
-    --accent: #CD853F; /* Peru */
+/* Light Theme (Default) */
+:root,
+[data-theme="light"] {
+    /* Primary Colors */
+    --primary: #8B4513;
+    /* SaddleBrown */
+    --primary-light: #A0522D;
+    /* Sienna */
+    --primary-dark: #654321;
+    /* Dark Brown */
+    --primary-hover: #7A3D0F;
+
+    /* Secondary Colors */
+    --secondary: #D2691E;
+    /* Chocolate */
+    --accent: #CD853F;
+    /* Peru */
 
     /* Action Colors */
-    --success: #558B2F; /* Dark Green */
-    --success-light: #C8E6C9; /* Light Green for buttons */
+    --success: #558B2F;
+    --success-light: #C8E6C9;
     --success-text: #2E7D32;
+    --success-hover: #689F38;
 
-    --error: #C62828; /* Dark Red */
-    --warning: #F57C00; /* Dark Orange */
+    --error: #C62828;
+    --error-light: #FFCDD2;
+    --error-text: #C62828;
+    --error-hover: #D32F2F;
 
+    --warning: #F57C00;
+    --warning-light: #FFE0B2;
+    --warning-text: #EF6C00;
+    --warning-hover: #FB8C00;
+
+    --info: #0277BD;
     --info-light: #B3E5FC;
     --info-text: #0277BD;
 
-    /* Lighter Button Variants */
+    /* Button Variants */
     --btn-secondary-light: #E8DDD3;
     --btn-secondary-text: #6D5D4B;
 
-    --warning-light: #FFE0B2;
-    --warning-text: #EF6C00;
+    /* Background Colors */
+    --bg-primary: #FFF8DC;
+    /* Cornsilk */
+    --bg-secondary: #FFFFFF;
+    --bg-tertiary: #F5F5F5;
+    --bg-hover: #F0E6D6;
+    --bg-card: #FFFFFF;
 
-    /* Base Colors */
-    --bg-light: #FFF8DC; /* Cornsilk */
-    --bg-white: #FFFFFF;
-    --border: #D7CCC8; /* Light border */
-    --text-dark: #3E2723; /* Very dark brown */
-    --text-light: #6D4C41; /* Medium brown */
+    /* Text Colors */
+    --text-primary: #3E2723;
+    /* Very dark brown */
+    --text-secondary: #6D4C41;
+    /* Medium brown */
+    --text-tertiary: #8D6E63;
+    --text-inverse: #FFFFFF;
+
+    /* Border Colors */
+    --border-primary: #D7CCC8;
+    --border-secondary: #BCAAA4;
+    --border-focus: #8B4513;
+
+    /* Shadow Colors */
+    --shadow-sm: rgba(0, 0, 0, 0.06);
+    --shadow-md: rgba(0, 0, 0, 0.08);
+    --shadow-lg: rgba(0, 0, 0, 0.12);
+    --shadow-xl: rgba(0, 0, 0, 0.15);
+
+    /* Navbar */
+    --navbar-bg: #654321;
+    --navbar-text: #FFFFFF;
+    --navbar-hover: rgba(255, 255, 255, 0.1);
+
+    /* Gantt Chart */
+    --gantt-bg: #FFF8DC;
+    --gantt-tooltip-bg: rgba(93, 78, 66, 0.95);
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+    /* Primary Colors */
+    --primary: #D2691E;
+    /* Lighter brown for dark mode */
+    --primary-light: #E87B3C;
+    --primary-dark: #A0522D;
+    --primary-hover: #E87B3C;
+
+    /* Secondary Colors */
+    --secondary: #8B4513;
+    /* Darker brown for dark mode */
+    --accent: #A0522D;
+    /* Darker sienna for dark mode */
+
+    /* Action Colors */
+    --success: #66BB6A;
+    --success-light: #2E5D31;
+    --success-text: #81C784;
+    --success-hover: #81C784;
+
+    --error: #EF5350;
+    --error-light: #5D2828;
+    --error-text: #EF5350;
+    --error-hover: #F44336;
+
+    --warning: #FFA726;
+    --warning-light: #5D3A1A;
+    --warning-text: #FFB74D;
+    --warning-hover: #FFB74D;
+
+    --info: #29B6F6;
+    --info-light: #1A3D52;
+    --info-text: #4FC3F7;
+
+    /* Button Variants */
+    --btn-secondary-light: #5A5A5A;
+    --btn-secondary-text: #E8E8E8;
+
+    /* Background Colors */
+    --bg-primary: #1A1A1A;
+    --bg-secondary: #2D2D2D;
+    --bg-tertiary: #3A3A3A;
+    --bg-hover: #404040;
+    --bg-card: #2D2D2D;
+
+    /* Text Colors */
+    --text-primary: #E8E8E8;
+    --text-secondary: #B8B8B8;
+    --text-tertiary: #909090;
+    --text-inverse: #1A1A1A;
+
+    /* Border Colors */
+    --border-primary: #404040;
+    --border-secondary: #505050;
+    --border-focus: #D2691E;
+
+    /* Shadow Colors */
+    --shadow-sm: rgba(0, 0, 0, 0.3);
+    --shadow-md: rgba(0, 0, 0, 0.4);
+    --shadow-lg: rgba(0, 0, 0, 0.5);
+    --shadow-xl: rgba(0, 0, 0, 0.6);
+
+    /* Navbar */
+    --navbar-bg: #1F1F1F;
+    --navbar-text: #E8E8E8;
+    --navbar-hover: rgba(255, 255, 255, 0.1);
+
+    /* Gantt Chart */
+    --gantt-bg: #2D2D2D;
+    --gantt-tooltip-bg: rgba(45, 45, 45, 0.95);
+}
+
+/* Theme Transition */
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 /* Global Styles */
@@ -46,17 +171,17 @@
 
 body {
     font-family: 'Nunito', sans-serif;
-    background-color: var(--bg-light);
-    color: var(--text-dark);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
     line-height: 1.6;
 }
 
 /* Navbar */
 .navbar {
-    background-color: var(--primary-dark);
-    color: white;
+    background-color: var(--navbar-bg);
+    color: var(--navbar-text);
     padding: 1rem 2rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px var(--shadow-md);
     border-radius: 0;
 }
 
@@ -71,7 +196,7 @@ body {
 .navbar-brand {
     font-size: 1.5rem;
     font-weight: bold;
-    color: white;
+    color: var(--navbar-text);
     text-decoration: none;
 }
 
@@ -82,7 +207,7 @@ body {
 }
 
 .navbar-menu a {
-    color: white;
+    color: var(--navbar-text);
     text-decoration: none;
     padding: 0.5rem 1rem;
     border-radius: 12px;
@@ -90,7 +215,33 @@ body {
 }
 
 .navbar-menu a:hover {
-    background-color: var(--primary-dark);
+    background-color: var(--navbar-hover);
+}
+
+/* Theme Toggle Button */
+#theme-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    color: var(--navbar-text);
+}
+
+#theme-toggle:hover {
+    background-color: var(--navbar-hover);
+    transform: scale(1.1);
+}
+
+#theme-toggle:active {
+    transform: scale(0.95);
+}
+
+.theme-icon {
+    display: inline-block;
+    transition: transform 0.3s ease;
 }
 
 /* Container */
@@ -102,12 +253,12 @@ body {
 
 /* Card */
 .card {
-    background-color: var(--bg-white);
+    background-color: var(--bg-card);
     border-radius: 16px;
     padding: 2rem;
     margin-bottom: 2rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-    border: 1px solid var(--border);
+    box-shadow: 0 4px 12px var(--shadow-sm);
+    border: 1px solid var(--border-primary);
 }
 
 .card-header {
@@ -188,24 +339,25 @@ body {
 .form-group label {
     display: block;
     margin-bottom: 0.5rem;
-    color: var(--text-dark);
+    color: var(--text-primary);
     font-weight: 500;
 }
 
 .form-control {
     width: 100%;
     padding: 0.75rem;
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-primary);
     border-radius: 12px;
     font-size: 1rem;
-    background-color: var(--bg-white);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
     transition: all 0.3s ease;
 }
 
 .form-control:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(184, 149, 106, 0.15);
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px var(--shadow-sm);
 }
 
 /* Tables */
@@ -233,11 +385,11 @@ body {
 
 .table td {
     padding: 1rem;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-primary);
 }
 
 .table tr:hover {
-    background-color: var(--bg-light);
+    background-color: var(--bg-hover);
 }
 
 /* Alerts */
@@ -310,18 +462,19 @@ body {
     display: flex;
     justify-content: space-between;
     margin-bottom: 0.5rem;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 2px solid var(--border-primary);
     padding-bottom: 0.5rem;
     font-size: 0.85rem;
-    color: var(--text-light);
+    color: var(--text-secondary);
 }
 
 .gantt-row {
     margin-bottom: 0.5rem;
     position: relative;
     height: 30px;
-    background-color: var(--bg-light);
+    background-color: var(--gantt-bg);
     border-radius: 12px;
+    border: 1px solid var(--border-primary);
 }
 
 .gantt-bar {
@@ -356,14 +509,14 @@ body {
 
 .gantt-tooltip {
     position: absolute;
-    background-color: rgba(93, 78, 66, 0.95);
-    color: white;
+    background-color: var(--gantt-tooltip-bg);
+    color: var(--text-inverse);
     padding: 0.75rem;
     border-radius: 12px;
     font-size: 0.9rem;
     z-index: 1000;
     pointer-events: none;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 6px 12px var(--shadow-lg);
     min-width: 150px;
     line-height: 1.4;
 }
@@ -402,15 +555,16 @@ body {
 }
 
 .markdown-preview code {
-    background-color: var(--bg-light);
+    background-color: var(--bg-tertiary);
     padding: 0.2rem 0.4rem;
     border-radius: 4px;
     font-family: 'Courier New', monospace;
     font-size: 0.9em;
+    color: var(--text-primary);
 }
 
 .markdown-preview pre {
-    background-color: var(--bg-light);
+    background-color: var(--bg-tertiary);
     padding: 1rem;
     border-radius: 8px;
     overflow-x: auto;
@@ -427,7 +581,7 @@ body {
     padding-left: 1rem;
     margin-left: 0;
     margin: 1rem 0;
-    color: var(--text-light);
+    color: var(--text-secondary);
 }
 
 .markdown-preview ul,
@@ -461,12 +615,12 @@ body {
 
 .markdown-preview table th,
 .markdown-preview table td {
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-primary);
     padding: 0.5rem;
 }
 
 .markdown-preview table th {
-    background-color: var(--bg-light);
+    background-color: var(--bg-tertiary);
     font-weight: bold;
 }
 
@@ -479,7 +633,7 @@ body {
 
 .markdown-preview hr {
     border: none;
-    border-top: 2px solid var(--border);
+    border-top: 2px solid var(--border-primary);
     margin: 2rem 0;
 }
 
@@ -544,7 +698,8 @@ body {
     }
 
     .form-control {
-        font-size: 16px; /* Prevents zoom on iOS */
+        font-size: 16px;
+        /* Prevents zoom on iOS */
     }
 }
 
