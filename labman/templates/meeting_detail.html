@@ -58,6 +58,19 @@
         </div>
     </div>
 
+    <!-- Calendar Integration Buttons -->
+    <div style="margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+        <a href="{{ calendar_links.google }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+            📅 Add to Google Calendar
+        </a>
+        <a href="{{ calendar_links.outlook }}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+            📅 Add to Outlook Calendar
+        </a>
+        <a href="{{ url_for('download_meeting_ics', meeting_id=meeting.id) }}" class="btn btn-secondary">
+            📥 Download Calendar File (.ics)
+        </a>
+    </div>
+
     {% if meeting.description %}
     <div style="background-color: var(--bg-light); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
         <h3 style="color: var(--primary); margin-bottom: 1rem;">Description</h3>

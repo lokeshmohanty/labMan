@@ -14,6 +14,9 @@ def create_meeting(title, description, meeting_time, created_by, group_id=None, 
         )
         meeting_id = cursor.lastrowid
         
+        # Auto-join creator to the meeting
+        record_meeting_response(meeting_id, created_by, 'join')
+        
         # Send notifications to Group members in background
         from labman.lib.email_service import send_meeting_bulk_notification
         from labman.lib.users import get_user_by_id
@@ -183,26 +186,46 @@ def get_all_tags():
     return sorted(list(unique_tags))
 
 def format_meeting_datetime(dt_str):
-    """Format datetime string to '22 Jan, 2026 (Thu) @ 10:00 AM'"""
+    """Format datetime string to '22 Jan, 2026 (Thu) @ 10:00 AM' with timezone support"""
+    import os
+    from zoneinfo import ZoneInfo
+    
+    # Get timezone from environment variable, default to Asia/Kolkata
+    timezone_str = os.getenv('TIMEZONE', 'Asia/Kolkata')
+    
     try:
-        dt = datetime.strptime(dt_str, '%Y-%m-%d %H:%M:%S')
-        day = dt.day
-        month = calendar.month_abbr[dt.month]
-        year = dt.year
-        weekday = calendar.day_abbr[dt.weekday()]
-        time = dt.strftime('%I:%M %p')
-        return f"{day} {month}, {year} ({weekday}) @ {time}"
-    except:
-        try:
-            dt = datetime.fromisoformat(dt_str.replace('T', ' '))
-            day = dt.day
-            month = calendar.month_abbr[dt.month]
-            year = dt.year
-            weekday = calendar.day_abbr[dt.weekday()]
-            time = dt.strftime('%I:%M %p')
-            return f"{day} {month}, {year} ({weekday}) @ {time}"
-        except:
+        # Parse the datetime string - try multiple formats
+        dt = None
+        formats_to_try = [
+            '%Y-%m-%dT%H:%M',           # ISO format without seconds: 2026-01-30T14:52
+            '%Y-%m-%d %H:%M:%S',        # Standard format with seconds: 2026-01-30 14:52:00
+            '%Y-%m-%dT%H:%M:%S',        # ISO format with seconds: 2026-01-30T14:52:00
+        ]
+        
+        for fmt in formats_to_try:
+            try:
+                dt = datetime.strptime(dt_str, fmt)
+                break
+            except ValueError:
+                continue
+        
+        if dt is None:
+            # If we can't parse it, return the original string
             return dt_str
+        
+        # Assume the stored time is in local timezone
+        dt_local = dt.replace(tzinfo=ZoneInfo(timezone_str))
+        
+        day = dt_local.day
+        month = calendar.month_abbr[dt_local.month]
+        year = dt_local.year
+        weekday = calendar.day_abbr[dt_local.weekday()]
+        time = dt_local.strftime('%I:%M %p')
+        return f"{day} {month}, {year} ({weekday}) @ {time}"
+    except Exception as e:
+        print(f"Error formatting datetime '{dt_str}': {e}")
+        return dt_str
+
 
 def delete_meeting(meeting_id):
     """Delete a meeting"""
@@ -261,3 +284,73 @@ def update_meeting_summary(meeting_id, summary):
     except Exception as e:
         print(f"Error updating meeting summary: {e}")
         return False
+
+def generate_calendar_links(meeting):
+    """Generate Google and Outlook calendar links for a meeting"""
+    from urllib.parse import quote
+    from datetime import timedelta
+    import os
+    from zoneinfo import ZoneInfo
+    
+    try:
+        # Get timezone from environment variable
+        timezone_str = os.getenv('TIMEZONE', 'Asia/Kolkata')
+        
+        # Parse meeting time - handle multiple formats
+        meeting_time_str = meeting['meeting_time']
+        dt = None
+        
+        # Try different datetime formats
+        formats_to_try = [
+            '%Y-%m-%dT%H:%M',           # ISO format without seconds: 2026-01-30T14:52
+            '%Y-%m-%d %H:%M:%S',        # Standard format with seconds: 2026-01-30 14:52:00
+            '%Y-%m-%dT%H:%M:%S',        # ISO format with seconds: 2026-01-30T14:52:00
+        ]
+        
+        for fmt in formats_to_try:
+            try:
+                dt = datetime.strptime(meeting_time_str, fmt)
+                break
+            except ValueError:
+                continue
+        
+        if dt is None:
+            raise ValueError(f"Could not parse datetime: {meeting_time_str}")
+        
+        # Assume the stored time is in local timezone, convert to UTC
+        dt_local = dt.replace(tzinfo=ZoneInfo(timezone_str))
+        dt_utc = dt_local.astimezone(ZoneInfo('UTC'))
+        
+        # Assume 1-hour duration
+        end_dt_utc = dt_utc + timedelta(hours=1)
+        
+        # Format for calendar APIs (use UTC times in ISO format)
+        start_str = dt_utc.strftime('%Y%m%dT%H%M%SZ')
+        end_str = end_dt_utc.strftime('%Y%m%dT%H%M%SZ')
+        
+        title = quote(meeting['title'])
+        description = quote(meeting['description'] or '')
+        
+        # Google Calendar URL
+        google_url = f"https://calendar.google.com/calendar/render?action=TEMPLATE&text={title}&dates={start_str}/{end_str}&details={description}"
+        
+        # Outlook Calendar URL - use proper ISO format with Z suffix
+        outlook_start = dt_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
+        outlook_end = end_dt_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
+        outlook_url = f"https://outlook.office.com/calendar/0/deeplink/compose?subject={title}&startdt={outlook_start}&enddt={outlook_end}&body={description}&path=/calendar/action/compose&rru=addevent"
+        
+        return {
+            'google': google_url,
+            'outlook': outlook_url
+        }
+    except Exception as e:
+        print(f"Error generating calendar links: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            'google': '#',
+            'outlook': '#'
+        }
+
+
+

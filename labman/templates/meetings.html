@@ -115,6 +115,7 @@
 
 <script>
     let currentDate = new Date();
+    let calendarInitialized = false;
 
     function filterByTag(tag) {
         if (tag) {
@@ -125,6 +126,9 @@
     }
 
     function changeMonth(delta) {
+        // Set to first day of month before changing to avoid date overflow issues
+        // (e.g., Jan 31 -> Feb 31 doesn't exist, would roll to Mar 3)
+        currentDate.setDate(1);
         currentDate.setMonth(currentDate.getMonth() + delta);
         renderCalendar();
     }
