@@ -1,16 +1,28 @@
 from werkzeug.security import generate_password_hash
 from labman.lib.data import get_db, query_db, execute_db
 from labman.lib.helpers import get_lab_group, get_server_url
+from labman.lib.validators import validate_email_address, sanitize_text, validate_password_strength
 from datetime import datetime, timedelta
 import secrets
 
 def create_user(name, email, password, is_admin=False):
     """Create a new user and send activation email"""
     try:
+        # Validate and sanitize inputs
+        is_valid, sanitized_name, error = sanitize_text(name, max_length=100)
+        if not is_valid:
+            print(f"Invalid name: {error}")
+            return False
+        
+        is_valid, normalized_email, error = validate_email_address(email)
+        if not is_valid:
+            print(f"Invalid email: {error}")
+            return False
+        
         # Create user without password (will be set on activation)
         cursor = execute_db(
             'INSERT INTO users (name, email, password_hash, is_admin) VALUES (?, ?, ?, ?)',
-            (name, email, None, is_admin)
+            (sanitized_name, normalized_email, None, is_admin)
         )
         user_id = cursor.lastrowid
         
@@ -24,12 +36,12 @@ def create_user(name, email, password, is_admin=False):
         from labman.lib.email_service import send_activation_email
         token = create_password_reset_token(user_id)
         activation_link = f"{get_server_url()}/activate/{token}"
-        send_activation_email(email, name, activation_link)
+        send_activation_email(normalized_email, sanitized_name, activation_link)
         
         # Log action
         from flask import session
         from labman.lib.audit import log_action
-        log_action(session.get('user_id'), "created user", f"Name: {name}, Email: {email}")
+        log_action(session.get('user_id'), "created user", f"Name: {sanitized_name}, Email: {normalized_email}")
 
         return True
     except Exception as e:
@@ -58,14 +70,25 @@ def get_user_by_email(email):
 def update_user(user_id, name, email, is_admin=False):
     """Update user information"""
     try:
+        # Validate and sanitize inputs
+        is_valid, sanitized_name, error = sanitize_text(name, max_length=100)
+        if not is_valid:
+            print(f"Invalid name: {error}")
+            return False
+        
+        is_valid, normalized_email, error = validate_email_address(email)
+        if not is_valid:
+            print(f"Invalid email: {error}")
+            return False
+        
         execute_db(
             'UPDATE users SET name = ?, email = ?, is_admin = ? WHERE id = ?',
-            (name, email, is_admin, user_id)
+            (sanitized_name, normalized_email, is_admin, user_id)
         )
         # Log action
         from flask import session
         from labman.lib.audit import log_action
-        log_action(session.get('user_id'), "updated user", f"UserID: {user_id}, Name: {name}")
+        log_action(session.get('user_id'), "updated user", f"UserID: {user_id}, Name: {sanitized_name}")
         return True
     except Exception as e:
         print(f"Error updating user: {e}")
@@ -74,6 +97,12 @@ def update_user(user_id, name, email, is_admin=False):
 def update_user_password(user_id, new_password):
     """Update user password"""
     try:
+        # Validate password strength
+        is_valid, error = validate_password_strength(new_password, min_length=6)
+        if not is_valid:
+            print(f"Weak password: {error}")
+            return False
+        
         password_hash = generate_password_hash(new_password)
         execute_db('UPDATE users SET password_hash = ? WHERE id = ?', (password_hash, user_id))
         

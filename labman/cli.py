@@ -315,6 +315,39 @@ def init():
     default_tags = "Weekly,Project Update,Journal Club"
     current_tags = defaults.get("DEFAULT_MEETING_TAGS", default_tags)
     meeting_tags = click.prompt("Default Meeting Tags", default=current_tags)
+    
+    # Security Configuration
+    click.echo("\nConfiguring Security Settings...")
+    click.echo("(Press Enter to use defaults - recommended for most users)")
+    
+    session_secure = click.prompt(
+        "SESSION_COOKIE_SECURE (True for production with HTTPS, False for dev)",
+        default=defaults.get("SESSION_COOKIE_SECURE", "False"),
+        type=click.Choice(['True', 'False'], case_sensitive=False)
+    )
+    
+    session_timeout = click.prompt(
+        "SESSION_TIMEOUT_MINUTES (auto-logout after inactivity)",
+        default=defaults.get("SESSION_TIMEOUT_MINUTES", "60"),
+        type=int
+    )
+    
+    csrf_enabled = click.prompt(
+        "CSRF_ENABLED (CSRF protection)",
+        default=defaults.get("CSRF_ENABLED", "True"),
+        type=click.Choice(['True', 'False'], case_sensitive=False)
+    )
+    
+    rate_limit_storage = click.prompt(
+        "RATE_LIMIT_STORAGE_URL (memory:// for dev, redis://localhost:6379 for prod)",
+        default=defaults.get("RATE_LIMIT_STORAGE_URL", "memory://")
+    )
+    
+    talisman_enabled = click.prompt(
+        "TALISMAN_ENABLED (Security headers - requires HTTPS)",
+        default=defaults.get("TALISMAN_ENABLED", "False"),
+        type=click.Choice(['True', 'False'], case_sensitive=False)
+    )
 
     env_content = f"""# Lab Manager Configuration
 LAB_NAME="{lab_name}"
@@ -334,6 +367,13 @@ SENDER_EMAIL="{sender_email}"
 
 # Optional Meetings/Tags
 DEFAULT_MEETING_TAGS="{meeting_tags}"
+
+# Security Configuration
+SESSION_COOKIE_SECURE={session_secure}
+SESSION_TIMEOUT_MINUTES={session_timeout}
+CSRF_ENABLED={csrf_enabled}
+RATE_LIMIT_STORAGE_URL="{rate_limit_storage}"
+TALISMAN_ENABLED={talisman_enabled}
 """
     
     if os.path.exists('.env'):

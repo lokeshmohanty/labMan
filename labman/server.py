@@ -9,19 +9,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = Flask(__name__)
-# Fix for gunicorn
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
-
-@app.before_request
-def check_allowed_hosts():
-    allowed = os.getenv('ALLOWED_HOSTS', '0.0.0.0')
-    if allowed == '0.0.0.0':
-        return
-    
-    host = request.host.split(':')[0]
-    if host not in allowed.split(','):
-        abort(403)
+# Import all required modules
 from labman.lib.auth import login_user, logout_user, require_login, require_admin, get_current_user
 from labman.lib.audit import get_audit_logs
 from labman.lib.users import create_user, get_all_users, update_user, delete_user, get_user_by_id, update_user_password, create_password_reset_token, verify_reset_token, update_user_notifications, get_latest_activation_token, resend_activation_email
@@ -33,17 +21,79 @@ from labman.lib.inventory import add_inventory_item, get_all_inventory, update_i
 from labman.lib.servers import add_server, get_all_servers, update_server, delete_server, get_server_by_id
 from labman.lib.research import get_research_plan, update_research_problem, add_research_task, update_research_task_status, delete_research_task, get_task_by_id, update_research_links, update_task_due_date, update_task_start_date
 
-load_dotenv()
-
 app = Flask(__name__)
+# Fix for gunicorn
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 app.secret_key = os.getenv('FLASK_SECRET_KEY')
 app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'data', 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
 
+# Session Security Configuration
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'True').lower() == 'true'
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=int(os.getenv('SESSION_TIMEOUT_MINUTES', '60')))
+
+# CSRF Protection (using Flask's built-in via secret_key)
+app.config['WTF_CSRF_ENABLED'] = os.getenv('CSRF_ENABLED', 'True').lower() == 'true'
+app.config['WTF_CSRF_TIME_LIMIT'] = None  # No time limit on CSRF tokens
+
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Initialize Rate Limiter
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    storage_uri=os.getenv('RATE_LIMIT_STORAGE_URL', 'memory://'),
+    default_limits=["200 per day", "50 per hour"],
+    storage_options={"socket_connect_timeout": 30},
+    strategy="fixed-window",
+)
+
+# Initialize Security Headers with Flask-Talisman
+from flask_talisman import Talisman
+
+# Content Security Policy
+csp = {
+    'default-src': "'self'",
+    'script-src': ["'self'", "'unsafe-inline'"],  # unsafe-inline needed for inline scripts
+    'style-src': ["'self'", "'unsafe-inline'"],   # unsafe-inline needed for inline styles
+    'img-src': ["'self'", 'data:', 'https:'],
+    'font-src': ["'self'", 'data:'],
+    'connect-src': "'self'",
+    'frame-ancestors': "'none'",
+}
+
+# Only enable Talisman in production (requires HTTPS)
+if os.getenv('TALISMAN_ENABLED', 'False').lower() == 'true':
+    Talisman(
+        app,
+        force_https=True,
+        strict_transport_security=True,
+        strict_transport_security_max_age=31536000,  # 1 year
+        content_security_policy=csp,
+        content_security_policy_nonce_in=['script-src'],
+        frame_options='DENY',
+        frame_options_allow_from=None,
+        referrer_policy='strict-origin-when-cross-origin',
+    )
 
 with app.app_context():
     init_db()
+
+# Security: Check allowed hosts
+@app.before_request
+def check_allowed_hosts():
+    allowed = os.getenv('ALLOWED_HOSTS', '0.0.0.0')
+    if allowed == '0.0.0.0':
+        return
+    
+    host = request.host.split(':')[0]
+    if host not in allowed.split(','):
+        abort(403)
 
 @app.context_processor
 def inject_lab_info():
@@ -72,6 +122,7 @@ def index():
     return render_template('login.html')
 
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per 15 minutes")
 def login():
     if request.method == 'POST':
         email = request.form.get('email')
@@ -79,6 +130,7 @@ def login():
         
         user = login_user(email, password)
         if user:
+            session.permanent = True  # Enable session timeout
             session['user_id'] = user['id']
             session['is_admin'] = user['is_admin']
             flash('Login successful!', 'success')
@@ -254,6 +306,7 @@ def resend_activation_route(user_id):
     return redirect(url_for('users'))
 
 @app.route('/activate/<token>', methods=['GET', 'POST'])
+@limiter.limit("5 per hour")
 def activate_account(token):
     user_id = verify_reset_token(token)
     
@@ -402,6 +455,7 @@ def admin_reset_password(user_id):
     return render_template('admin_reset_password.html', user=user)
 
 @app.route('/forgot-password', methods=['GET', 'POST'])
+@limiter.limit("3 per hour")
 def forgot_password():
     if request.method == 'POST':
         email = request.form.get('email')
@@ -425,6 +479,7 @@ def forgot_password():
     return render_template('forgot_password.html')
 
 @app.route('/reset-password/<token>', methods=['GET', 'POST'])
+@limiter.limit("5 per hour")
 def reset_password(token):
     user_id = verify_reset_token(token)
     

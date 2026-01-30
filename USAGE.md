@@ -12,6 +12,7 @@ Complete guide for using the Lab Management System.
 - [Content Library](#content-library)
 - [Lab Inventory](#lab-inventory)
 - [Notifications](#notifications)
+- [Security & Best Practices](#security--best-practices)
 - [Mobile Access](#mobile-access)
 
 ---
@@ -230,12 +231,14 @@ Use filters to find content:
 3. Click "Upload Content"
 
 **Allowed file types:**
-- Documents: PDF, DOC, DOCX, TXT, MD
-- Spreadsheets: XLS, XLSX, CSV
-- Presentations: PPT, PPTX
-- Images: PNG, JPG, JPEG, GIF
-- Code: PY, IPYNB
-- Archives: ZIP
+- Documents: PDF, DOC, DOCX, TXT, MD, TEX, BIB
+- Spreadsheets: XLS, XLSX, CSV, JSON, XML
+- Presentations: PPT, PPTX, ODP
+- Images: PNG, JPG, JPEG, GIF, SVG, WEBP
+- Code: PY, JS, HTML, CSS, JAVA, CPP, C, H
+- Archives: ZIP, TAR, GZ, 7Z
+
+> ⚠️ **Security Note**: Executable files (.exe, .sh, .bat) are blocked for security. If you need to share code, use archives or text formats.
 
 ### Share Content
 For files with "Anyone with Link" access:
@@ -304,6 +307,87 @@ View server information:
 2. Click "Edit"
 3. Update fields
 4. Click "Update Item"
+
+---
+
+## Security & Best Practices
+
+### Security Features
+
+The system includes comprehensive security measures to protect your data:
+
+#### Rate Limiting
+To prevent abuse, the system limits:
+- **Login attempts**: 5 per 15 minutes
+- **Password reset requests**: 3 per hour
+- **Account activation**: 5 per hour
+
+If you exceed these limits, wait for the time period to expire before trying again.
+
+#### Password Requirements
+Passwords must:
+- Be at least 6 characters long
+- Contain both letters AND numbers
+- Example: `MyPass123` ✅ | `password` ❌ | `123456` ❌
+
+#### File Upload Security
+For your protection:
+- Maximum file size: 100MB
+- Executable files (.exe, .sh, .bat) are blocked
+- Only approved file types are allowed (see Content Library section)
+- Filenames are sanitized to prevent security issues
+
+#### Session Security
+- **Auto-logout**: Sessions expire after 60 minutes of inactivity
+- **Secure cookies**: Your session is protected with secure flags
+- **Session regeneration**: New session created on each login
+
+### Security Best Practices
+
+#### Password Security
+1. ✅ Use strong passwords (6+ characters, mix of letters and numbers)
+2. ✅ Change password every 3-6 months
+3. ✅ Never share your password
+4. ✅ Use different passwords for different systems
+5. ✅ Log out on shared computers
+
+#### Account Security
+1. ✅ Enable email notifications for security alerts
+2. ✅ Review your account activity regularly
+3. ✅ Report suspicious activity to admin immediately
+4. ✅ Don't click suspicious links in emails
+
+#### File Sharing Security
+1. ✅ Only upload files you trust
+2. ✅ Use "Group Members Only" for sensitive content
+3. ✅ Use "Anyone with Link" only for public content
+4. ✅ Don't share private links publicly
+5. ✅ Review who has access to your files
+
+#### Data Protection
+1. ✅ Don't include sensitive data in file names
+2. ✅ Use appropriate access levels
+3. ✅ Delete old/unused files
+4. ✅ Report data breaches immediately
+
+### What to Do If...
+
+#### You're Locked Out (Too Many Login Attempts)
+1. Wait 15 minutes for the rate limit to reset
+2. Use "Forgot Password" if you don't remember your password
+3. Contact admin if you still can't access
+
+#### You Suspect Your Account Was Compromised
+1. Change your password immediately
+2. Log out all sessions
+3. Contact admin to report the incident
+4. Review recent activity in your account
+
+#### You Receive a Suspicious Email
+1. Don't click any links
+2. Verify sender email address
+3. Contact admin to confirm legitimacy
+4. Report phishing attempts
 
 ---
 
@@ -443,11 +527,13 @@ The system is mobile-friendly and works on:
 ## Best Practices
 
 ### Security
-- Use strong passwords (12+ characters)
+- Use strong passwords (6+ characters with letters and numbers)
 - Change password regularly (every 3-6 months)
 - Don't share your password
 - Log out on shared computers
 - Enable email notifications for security alerts
+- Don't exceed rate limits (wait if locked out)
+- Only upload trusted files
 
 ### Content Management
 - Upload files promptly after meetings
