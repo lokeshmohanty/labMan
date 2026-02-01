@@ -11,6 +11,7 @@ from app.schemas.group_project import (
     GroupProjectUpdate, GroupProjectResponse,
     GroupTaskCreate, GroupTaskUpdate, GroupTaskResponse
 )
+from app.services.audit import log_action
 
 router = APIRouter()
 
@@ -110,6 +111,8 @@ async def create_group(
     db.commit()
     db.refresh(db_group)
     
+    log_action(db, action="created group", user_id=current_user.id, details=f"Created group '{db_group.name}'")
+
     return db_group
 
 @router.get("/{group_id}", response_model=GroupResponse)
@@ -159,6 +162,9 @@ async def update_group(
     
     db.commit()
     db.refresh(group)
+    
+    log_action(db, action="updated group", user_id=current_user.id, details=f"Updated group '{group.name}'")
+
     return group
 
 @router.delete("/{group_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -172,8 +178,12 @@ async def delete_group(
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
     
+    name = group.name
     db.delete(group)
     db.commit()
+    
+    log_action(db, action="deleted group", user_id=current_user.id, details=f"Deleted group '{name}'")
+    
     return None
 
 # Group Membership Endpoints
@@ -239,6 +249,9 @@ async def add_group_member(
     db.add(membership)
     db.commit()
     db.refresh(membership)
+    
+    log_action(db, action="added member", user_id=current_user.id, details=f"Added {user.name} to group '{group.name}'")
+
     return membership
 
 @router.delete("/{group_id}/members/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -256,8 +269,16 @@ async def remove_group_member(
     if not membership:
         raise HTTPException(status_code=404, detail="Membership not found")
     
+    # Get names for log
+    group = db.query(ResearchGroup).filter(ResearchGroup.id == group_id).first()
+    user = db.query(User).filter(User.id == user_id).first()
+
     db.delete(membership)
     db.commit()
+    
+    if group and user:
+         log_action(db, action="removed member", user_id=current_user.id, details=f"Removed {user.name} from group '{group.name}'")
+
     return None
 
 # Group Project Page Endpoints
@@ -321,6 +342,9 @@ async def update_group_project(
     
     db.commit()
     db.refresh(project)
+    
+    log_action(db, action="updated project", user_id=current_user.id, details=f"Updated project page for group {group_id}")
+
     return project
 
 # Group Project Tasks Endpoints
@@ -363,6 +387,9 @@ async def create_group_task(
     db.add(task)
     db.commit()
     db.refresh(task)
+    
+    log_action(db, action="created task", user_id=current_user.id, details=f"Created task '{task.title}' in group {group_id}")
+
     return task
 
 @router.put("/{group_id}/project/tasks/{task_id}", response_model=GroupTaskResponse)
@@ -406,6 +433,9 @@ async def update_group_task(
     
     db.commit()
     db.refresh(task)
+    
+    log_action(db, action="updated task", user_id=current_user.id, details=f"Updated task '{task.title}' status to {task.status}")
+
     return task
 
 @router.delete("/{group_id}/project/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -434,6 +464,10 @@ async def delete_group_task(
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     
+    title = task.title
     db.delete(task)
     db.commit()
+    
+    log_action(db, action="deleted task", user_id=current_user.id, details=f"Deleted task '{title}' from group {group_id}")
+
     return None
