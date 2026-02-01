@@ -1,4 +1,5 @@
 import { createSignal, createResource, For, Show } from 'solid-js';
+import { formatDateTime } from '../utils/dateUtils';
 import { auditService, type AuditLog } from '../services/audit';
 import '../styles/common.css';
 
@@ -17,17 +18,6 @@ export default function ActivityHistory() {
             });
         }
     );
-
-    const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        return date.toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
 
     const getActionBadgeClass = (action: string) => {
         if (action.includes('login')) return 'badge-success';
@@ -81,7 +71,7 @@ export default function ActivityHistory() {
                                         <span class={`badge ${getActionBadgeClass(log.action)}`}>
                                             {log.action}
                                         </span>
-                                        <span class="activity-time">{formatDate(log.created_at)}</span>
+                                        <span class="activity-time">{formatDateTime(log.created_at)}</span>
                                     </div>
                                     <div class="activity-body">
                                         <strong>{log.user_name || 'System'}</strong>

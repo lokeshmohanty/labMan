@@ -4,6 +4,7 @@ import { groupService } from '../services/groups';
 import { marked } from 'marked';
 import type { GroupProject, GroupTask } from '../types';
 import MarkdownTextarea from '../components/MarkdownTextarea';
+import { formatDate } from '../utils/dateUtils';
 import '../styles/project.css';
 
 export default function GroupProjectPage() {
@@ -290,10 +291,10 @@ export default function GroupProjectPage() {
                                                     </Show>
                                                     <div class="task-dates">
                                                         <Show when={task.start_date}>
-                                                            <span>Start: {task.start_date}</span>
+                                                            <span>Start: {formatDate(task.start_date!)}</span>
                                                         </Show>
                                                         <Show when={task.end_date}>
-                                                            <span>Due: {task.end_date}</span>
+                                                            <span>Due: {formatDate(task.end_date!)}</span>
                                                         </Show>
                                                     </div>
                                                 </div>

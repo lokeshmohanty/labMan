@@ -4,6 +4,7 @@ import { meetingService } from '../services/meetings';
 import { useAuth } from '../stores/auth';
 import type { Meeting } from '../types';
 import { marked } from 'marked';
+import { formatMeetingDate } from '../utils/dateUtils';
 import '../styles/project.css';
 
 export default function MeetingDetail() {
@@ -13,15 +14,6 @@ export default function MeetingDetail() {
     const [meeting] = createResource<Meeting>(() => meetingService.getMeeting(parseInt(params.id)));
     const [responses, { refetch: refetchResponses }] = createResource(() => meetingService.getMeetingResponses(parseInt(params.id)));
 
-    const formatDateTime = (dateStr: string) => {
-        const date = new Date(dateStr);
-        // Format: "10:00 AM, 10 Feb, 2026 (Wed)"
-        const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-        const day = date.getDate();
-        const month = date.toLocaleDateString('en-US', { month: 'short' });
-        const weekday = date.toLocaleDateString('en-US', { weekday: 'short' });
-        return `${time}\u00A0\u00A0\u00A0${day} ${month} (${weekday})`;
-    };
 
     const handleRSVP = async (response: string) => {
         try {
@@ -67,7 +59,7 @@ export default function MeetingDetail() {
                                     <div class="meeting-meta-large">
                                         <div class="meta-item">
                                             <span class="meta-label">Date & Time</span>
-                                            <span class="meta-value">{formatDateTime(m.meeting_time)}</span>
+                                            <span class="meta-value">{formatMeetingDate(m.meeting_time)}</span>
                                         </div>
                                         <Show when={m.group_name}>
                                             <div class="meta-item">

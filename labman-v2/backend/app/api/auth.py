@@ -127,3 +127,11 @@ async def reset_password(
     db.commit()
     
     return {"message": "Password reset successfully"}
+
+@router.get("/system-info")
+async def get_system_info():
+    """Get public system information"""
+    return {
+        "lab_name": settings.LAB_NAME,
+        "timezone": settings.TIMEZONE
+    }

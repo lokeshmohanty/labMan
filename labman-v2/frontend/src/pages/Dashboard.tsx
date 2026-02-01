@@ -5,6 +5,7 @@ import { meetingService } from '../services/meetings';
 import { auditService } from '../services/audit';
 import { inventoryService } from '../services/inventory';
 import { A } from '@solidjs/router';
+import { formatDashboardDate, formatDateTime } from '../utils/dateUtils';
 import '../styles/dashboard.css';
 
 export default function Dashboard() {
@@ -21,15 +22,6 @@ export default function Dashboard() {
             .filter(m => new Date(m.meeting_time) > now)
             .sort((a, b) => new Date(a.meeting_time).getTime() - new Date(b.meeting_time).getTime())
             .slice(0, 3);
-    };
-
-    const formatDateTime = (dateStr: string) => {
-        const date = new Date(dateStr);
-        const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-        const day = date.getDate();
-        const month = date.toLocaleDateString('en-US', { month: 'short' });
-        const weekday = date.toLocaleDateString('en-US', { weekday: 'short' });
-        return `${time} ${day} ${month} (${weekday})`;
     };
 
     return (
@@ -58,7 +50,7 @@ export default function Dashboard() {
                 <div class="card main-span">
                     <div class="card-header">
                         <h2>Upcoming Meetings</h2>
-                        <A href="/meetings" class="view-all">View Calendar</A>
+                        <A href="/meetings?view=calendar" class="view-all">View Calendar</A>
                     </div>
                     <Show when={upcomingMeetings().length > 0} fallback={<p class="empty-state">No upcoming meetings scheduled.</p>}>
                         <div class="meeting-list-mini">
@@ -67,7 +59,7 @@ export default function Dashboard() {
                                     <A href={`/meetings/${meeting.id}`} class="meeting-item-mini">
                                         <div class="meeting-info">
                                             <span class="meeting-title">{meeting.title}</span>
-                                            <span class="meeting-time">{formatDateTime(meeting.meeting_time)}</span>
+                                            <span class="meeting-time">{formatDashboardDate(meeting.meeting_time)}</span>
                                         </div>
                                         <Show when={meeting.group_name}>
                                             <span class="meeting-tag">{meeting.group_name}</span>
@@ -114,7 +106,7 @@ export default function Dashboard() {
                                             <Show when={log.details}>
                                                 <span class="log-details">{log.details}</span>
                                             </Show>
-                                            <span class="log-time">{new Date(log.created_at).toLocaleString()}</span>
+                                            <span class="log-time">{formatDateTime(log.created_at)}</span>
                                         </div>
                                     </div>
                                 )}

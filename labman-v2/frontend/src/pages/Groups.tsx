@@ -1,4 +1,4 @@
-import { createSignal, createResource, Show, For } from 'solid-js';
+import { createSignal, createResource, Show, For, onMount } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { groupService } from '../services/groups';
 import { userService } from '../services/users';
@@ -48,7 +48,20 @@ export default function Groups() {
 
     const openCreateModal = () => {
         setEditingId(null);
-        setFormData({ name: '', description: '', parent_id: undefined, lead_id: undefined });
+        // Find default parent (group matching lab name or first group)
+        let defaultParentId: number | undefined = undefined;
+        const currentGroups = flattenGroups(groups() || []);
+        if (currentGroups.length > 0) {
+            const labGroup = currentGroups.find(g => g.name === labName());
+            if (labGroup) {
+                defaultParentId = labGroup.id;
+            } else {
+                // Fallback to first group if exact match not found
+                defaultParentId = currentGroups[0].id;
+            }
+        }
+
+        setFormData({ name: '', description: '', parent_id: defaultParentId, lead_id: undefined });
         setShowCreateModal(true);
     };
 
@@ -74,30 +87,86 @@ export default function Groups() {
         return result;
     };
 
+    const [labName, setLabName] = createSignal('Lab Manager');
+
+    onMount(async () => {
+        try {
+            const response = await fetch('/api/v1/auth/system-info');
+            const data = await response.json();
+            if (data.lab_name) {
+                setLabName(data.lab_name);
+            }
+        } catch (error) {
+            console.error('Failed to fetch system info:', error);
+        }
+    });
+
     const renderTree = (nodes: GroupTreeNode[]) => {
+        // Find if there's an actual group that matches the Lab Name
+        const labGroup = nodes.find(n => n.name === labName());
+        const otherGroups = nodes.filter(n => n.name !== labName());
+
+        // Base properties for the root
+        let rootNode: GroupTreeNode = {
+            id: 0, // Virtual ID by default
+            name: labName(),
+            description: 'Lab Root',
+            lead_id: undefined,
+            lead_name: undefined,
+            member_count: 0,
+            members: [],
+            children: []
+        };
+
+        if (labGroup) {
+            // If we found a matching group, use its details as the root
+            // and dissolve it (promote its children to root children)
+            rootNode = {
+                ...rootNode,
+                ...labGroup, // Overwrite with real data (id, description, members, etc.)
+                member_count: labGroup.member_count,
+                // Merge children: Real children of LabGroup + Other top-level groups
+                children: [...(labGroup.children || []), ...otherGroups]
+            };
+        } else {
+            // No matching group, just wrap everything
+            rootNode.children = nodes;
+            rootNode.member_count = nodes.reduce((acc, curr) => acc + (curr.member_count || 0), 0);
+        }
+
         return (
             <div class="group-tree-wrapper">
-                <For each={nodes}>
-                    {(node) => <TreeNode node={node} />}
-                </For>
+                <TreeNode node={rootNode} isRoot={true} />
             </div>
         );
     };
 
-    const TreeNode = (props: { node: GroupTreeNode }) => {
+    const TreeNode = (props: { node: GroupTreeNode; isRoot?: boolean }) => {
         const hasChildren = props.node.children && props.node.children.length > 0;
 
+        // Disable navigation for virtual root
+        const handleClick = () => {
+            if (!props.isRoot) {
+                navigate(`/groups/${props.node.id}`);
+            }
+            // Optional: Toggle collapse if we add collapsing later
+        };
+
         return (
-            <div class="group-card-node">
+            <div class={`group-card-node ${props.isRoot ? 'root-node' : ''}`}>
                 <div class="group-header-content">
                     <div class="group-node-header">
-                        <h3 class="group-title" onClick={() => navigate(`/groups/${props.node.id}`)}>
+                        <h3
+                            class="group-title"
+                            onClick={handleClick}
+                            style={{ cursor: props.isRoot ? 'default' : 'pointer' }}
+                        >
                             {props.node.name}
                         </h3>
                     </div>
                 </div>
 
-                {/* Members Section */}
+                {/* Members Section - Skip for root if empty */}
                 <Show when={props.node.members && props.node.members.length > 0}>
                     <div class="members-container">
                         <For each={props.node.members}>
@@ -128,7 +197,10 @@ export default function Groups() {
                 {/* Nested Subgroups */}
                 <Show when={hasChildren}>
                     <div class="subgroups-container">
-                        <h4 class="subgroups-label">Subgroups</h4>
+                        {/* Only show label for non-root nodes, or customize for root */}
+                        <Show when={!props.isRoot}>
+                            <h4 class="subgroups-label">Subgroups</h4>
+                        </Show>
                         <div class="subgroups-list">
                             <For each={props.node.children}>
                                 {(child) => <TreeNode node={child} />}
@@ -252,14 +324,13 @@ export default function Groups() {
                             </div>
                             <Show when={!editingId()}>
                                 <div class="form-group">
-                                    <label>Parent Group (optional)</label>
+                                    <label>Parent Group</label>
                                     <select
                                         value={formData().parent_id || ''}
                                         onChange={(e) => setFormData({ ...formData(), parent_id: e.currentTarget.value ? parseInt(e.currentTarget.value) : undefined })}
                                     >
-                                        <option value="">None (Top-level group)</option>
-                                        <Show when={groups()}>
-                                            <For each={groups()}>
+                                        <Show when={groups()} fallback={<option value="">Loading...</option>}>
+                                            <For each={flattenGroups(groups() || [])}>
                                                 {(group) => <option value={group.id}>{group.name}</option>}
                                             </For>
                                         </Show>

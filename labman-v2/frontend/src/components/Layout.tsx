@@ -1,25 +1,40 @@
 import { A, useNavigate } from '@solidjs/router';
 import { useAuth } from '../stores/auth';
-import { createSignal, Show } from 'solid-js';
+import { appConfig, updateAppConfig } from '../stores/appConfig';
+import { createSignal, Show, onMount } from 'solid-js';
 import '../styles/layout.css';
 import '../styles/settings.css';
+import apiClient from '../services/api';
 
 export default function Layout(props: any) {
     const { isAuthenticated, isAdmin, logout } = useAuth();
     const navigate = useNavigate();
     const [showSettings, setShowSettings] = createSignal(false);
-
     const handleLogout = () => {
         logout();
         navigate('/login');
     };
+
+    // Sync app config on mount
+    onMount(async () => {
+        try {
+            const response = await apiClient.get('/auth/system-info');
+            const data = response.data;
+            updateAppConfig({
+                labName: data.lab_name || 'LabMan v2',
+                timezone: data.timezone || 'Asia/Kolkata'
+            });
+        } catch (error) {
+            console.error('Failed to fetch system info:', error);
+        }
+    });
 
     return (
         <div class="app-layout">
             <Show when={isAuthenticated()}>
                 <nav class="sidebar">
                     <div class="sidebar-header">
-                        <h2>LabMan v2</h2>
+                        <h2>{appConfig().labName}</h2>
                     </div>
                     <div class="nav-links">
                         <A href="/dashboard" activeClass="active">Dashboard</A>

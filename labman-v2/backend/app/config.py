@@ -31,9 +31,10 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER: str = "admin@example.com"
     FIRST_SUPERUSER_PASSWORD: str = "admin123"
     LAB_NAME: str = "Lab Manager"
+    TIMEZONE: str = "Asia/Kolkata"
 
     model_config = SettingsConfigDict(
-        toml_file="conf.toml",
+        toml_file="data/config.toml",
         case_sensitive=True,
         extra="ignore"
     )

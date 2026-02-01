@@ -8,8 +8,6 @@ from sqlalchemy.orm import Session
 from app.models import EmailFailure
 from datetime import datetime
 
-settings = get_settings()
-
 async def send_email(
     to_email: str,
     subject: str,
@@ -17,6 +15,7 @@ async def send_email(
     body_text: Optional[str] = None
 ) -> bool:
     """Send an email"""
+    settings = get_settings()
     if not settings.SMTP_HOST:
         print(f"SMTP not configured, skipping email to {to_email}")
         return False

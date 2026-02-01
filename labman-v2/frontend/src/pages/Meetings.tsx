@@ -1,15 +1,20 @@
 import { createSignal, createResource, createMemo, Show, For } from 'solid-js';
-import { useNavigate } from '@solidjs/router';
+import { useNavigate, useSearchParams } from '@solidjs/router';
 import { meetingService } from '../services/meetings';
 import { groupService } from '../services/groups';
 import type { Meeting, MeetingCreate } from '../types';
 import MarkdownTextarea from '../components/MarkdownTextarea';
+import { formatMeetingDate, formatTime } from '../utils/dateUtils';
+import { appConfig } from '../stores/appConfig';
 import '../styles/tabs.css';
 import '../styles/calendar.css';
 
 export default function Meetings() {
     const navigate = useNavigate();
-    const [viewMode, setViewMode] = createSignal<'list' | 'calendar'>('list');
+    const [searchParams] = useSearchParams();
+    const [viewMode, setViewMode] = createSignal<'list' | 'calendar'>(
+        searchParams.view === 'calendar' ? 'calendar' : 'list'
+    );
     const [currentDate, setCurrentDate] = createSignal(new Date());
     const [meetings, { refetch }] = createResource<Meeting[]>(
         () => meetingService.getMeetings()
@@ -25,6 +30,18 @@ export default function Meetings() {
     });
 
     const openCreateModal = (date?: Date) => {
+        // Find default group (group matching lab name or first group)
+        let defaultGroupId: number | undefined = undefined;
+        const currentGroups = groups() || [];
+        if (currentGroups.length > 0) {
+            const labGroup = currentGroups.find(g => g.name === appConfig().labName);
+            if (labGroup) {
+                defaultGroupId = labGroup.id;
+            } else {
+                defaultGroupId = currentGroups[0].id;
+            }
+        }
+
         if (date) {
             // Format date for datetime-local: YYYY-MM-DDTHH:mm
             const year = date.getFullYear();
@@ -34,10 +51,11 @@ export default function Meetings() {
             const minutes = String(date.getMinutes()).padStart(2, '0');
             setFormData({
                 ...formData(),
-                meeting_time: `${year}-${month}-${day}T${hours}:${minutes}`
+                meeting_time: `${year}-${month}-${day}T${hours}:${minutes}`,
+                group_id: defaultGroupId
             });
         } else {
-            setFormData({ title: '', description: '', meeting_time: '', group_id: undefined, is_private: false });
+            setFormData({ title: '', description: '', meeting_time: '', group_id: defaultGroupId, is_private: false });
         }
         setShowCreateModal(true);
     };
@@ -63,19 +81,6 @@ export default function Meetings() {
         }
     };
 
-    const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-        const day = date.getDate();
-        const month = date.toLocaleDateString('en-US', { month: 'short' });
-        const weekday = date.toLocaleDateString('en-US', { weekday: 'short' });
-        return `${time}\u00A0\u00A0\u00A0${day} ${month} (${weekday})`;
-    };
-
-    const formatTime = (dateStr: string) => {
-        return new Date(dateStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    };
-
     // Calendar helper functions
     const getDaysInMonth = (date: Date) => {
         const year = date.getFullYear();
@@ -91,6 +96,7 @@ export default function Meetings() {
 
     const getMeetingsForDate = (date: Date) => {
         if (!meetings()) return [];
+        // Extract YYYY-MM-DD in UTC for initial check, then refine based on actual time
         const dateStr = date.toISOString().split('T')[0];
         return meetings()!.filter(meeting => {
             const meetingDate = new Date(meeting.meeting_time).toISOString().split('T')[0];
@@ -168,7 +174,7 @@ export default function Meetings() {
                             {(meeting) => (
                                 <div class="card meeting-card-clickable" onClick={() => navigate(`/meetings/${meeting.id}`)}>
                                     <div class="meeting-meta">
-                                        <span class="meeting-time">{formatDate(meeting.meeting_time)}</span>
+                                        <span class="meeting-time">{formatMeetingDate(meeting.meeting_time)}</span>
                                         <Show when={meeting.group_name}>
                                             <span class="badge badge-group">{meeting.group_name}</span>
                                         </Show>
@@ -289,29 +295,40 @@ export default function Meetings() {
                                         value={formData().group_id || ''}
                                         onChange={(e) => setFormData({ ...formData(), group_id: e.currentTarget.value ? parseInt(e.currentTarget.value) : undefined })}
                                     >
-                                        <option value="">Default Group</option>
-                                        <For each={groups()}>
-                                            {(group) => (
-                                                <option value={group.id}>{group.name}</option>
-                                            )}
-                                        </For>
+                                        <Show when={groups()} fallback={<option value="">Loading...</option>}>
+                                            <For each={groups()}>
+                                                {(group) => (
+                                                    <option value={group.id}>{group.name}</option>
+                                                )}
+                                            </For>
+                                        </Show>
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <label>Visibility</label>
-                                    <div class="toggle-container" style="margin-top: 0.5rem;">
-                                        <label class="toggle-switch">
-                                            <input
-                                                type="checkbox"
-                                                checked={formData().is_private}
-                                                onChange={(e) => setFormData({ ...formData(), is_private: e.currentTarget.checked })}
-                                            />
-                                            <span class="toggle-slider"></span>
-                                        </label>
-                                        <span style="margin-left: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">
-                                            {formData().is_private ? 'Private' : 'Public'}
-                                        </span>
+                                    <div class="visibility-selector" style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                        <button
+                                            type="button"
+                                            class={`btn ${!formData().is_private ? 'btn-primary' : 'btn-outline'}`}
+                                            onClick={() => setFormData({ ...formData(), is_private: false })}
+                                            style={{ flex: 1, "justify-content": "center" }}
+                                        >
+                                            🌍 Public
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class={`btn ${formData().is_private ? 'btn-danger' : 'btn-outline'}`}
+                                            onClick={() => setFormData({ ...formData(), is_private: true })}
+                                            style={{ flex: 1, "justify-content": "center" }}
+                                        >
+                                            🔒 Private
+                                        </button>
                                     </div>
+                                    <p class="help-text" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                                        {formData().is_private
+                                            ? 'Only invited members and group members can see this meeting.'
+                                            : 'Visible to all lab members on the calendar.'}
+                                    </p>
                                 </div>
                             </div>
                             <div class="modal-actions">

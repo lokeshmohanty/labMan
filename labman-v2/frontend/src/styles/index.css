@@ -139,3 +139,12 @@ body {
     background: #fef3c7;
     color: #92400e;
 }
+
+.badge-error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.ml-2 {
+    margin-left: 0.5rem;
+}

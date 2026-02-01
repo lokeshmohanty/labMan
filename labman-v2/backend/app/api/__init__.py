@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api import auth, users, groups, meetings, content, inventory, servers, research, audit, books
+from app.api import auth, users, groups, meetings, content, inventory, servers, research, audit, books, admin
 
 api_router = APIRouter()
 
@@ -13,3 +13,5 @@ api_router.include_router(servers.router, prefix="/servers", tags=["servers"])
 api_router.include_router(research.router, prefix="/research", tags=["research"])
 api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
 api_router.include_router(books.router, prefix="/books", tags=["books"])
+api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
+api_router.include_router(admin.router, prefix="/admin", tags=["admin"])
