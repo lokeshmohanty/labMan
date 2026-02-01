@@ -9,7 +9,25 @@
     --text: #111827;
     --text-secondary: #6b7280;
     --border: #e5e7eb;
+    --border-primary: #cbd5e1;
+    /* Darker than --border for visibility */
     --shadow: rgba(0, 0, 0, 0.1);
+
+    /* Extended Palette */
+    --info: #3b82f6;
+    --text-light: #9ca3af;
+
+    --warning-light: #fef3c7;
+    --warning-text: #92400e;
+
+    --success-light: #d1fae5;
+    --success-text: #065f46;
+
+    --info-light: #dbeafe;
+    --info-text: #1e40af;
+
+    --danger-light: #fee2e2;
+    --danger-text: #991b1b;
 }
 
 * {

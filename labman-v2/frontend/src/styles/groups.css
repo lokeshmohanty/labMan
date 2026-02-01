@@ -14,245 +14,148 @@
     color: var(--text-primary);
 }
 
-/* Tree Visualization Styles */
+/* Nested Card Layout */
 .group-tree-container {
-    padding: 2rem 0;
-    overflow-x: auto;
-    text-align: center;
+    padding: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
 }
 
-.tree ul {
-    padding-top: 20px;
-    position: relative;
-    transition: all 0.5s;
+.group-tree-wrapper {
     display: flex;
-    justify-content: center;
-    margin: 0;
-    padding-left: 0;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
-.tree li {
-    float: left;
-    text-align: center;
-    list-style-type: none;
-    position: relative;
-    padding: 20px 5px 0 5px;
-    transition: all 0.5s;
-}
-
-/* Connectors using pseudo-elements */
-.tree li::before,
-.tree li::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 50%;
-    border-top: 2px solid var(--border-primary);
-    width: 50%;
-    height: 20px;
-}
-
-.tree li::after {
-    right: auto;
-    left: 50%;
-    border-left: 2px solid var(--border-primary);
-}
-
-/* Remove connectors from the only child */
-.tree li:only-child::after,
-.tree li:only-child::before {
-    display: none;
-}
-
-/* Remove space from the only child */
-.tree li:only-child {
-    padding-top: 0;
-}
-
-/* Remove left connector from first child and right connector from last child */
-.tree li:first-child::before,
-.tree li:last-child::after {
-    border: 0 none;
-}
-
-/* Adding back the vertical connector to the last nodes */
-.tree li:last-child::before {
-    border-right: 2px solid var(--border-primary);
-    border-radius: 0 5px 0 0;
-}
-
-.tree li:first-child::after {
-    border-radius: 5px 0 0 0;
-}
-
-/* Downward connector from parents */
-.tree ul ul::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 50%;
-    border-left: 2px solid var(--border-primary);
-    width: 0;
-    height: 20px;
-}
-
-/* Node Styles */
 .group-card-node {
-    display: inline-block;
-    border: 1px solid var(--border-primary);
-    padding: 0.75rem 1rem;
-    text-decoration: none;
-    color: var(--text-primary);
-    font-family: arial, verdana, tahoma;
-    font-size: 14px;
-    background: var(--bg-secondary);
-    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     transition: all 0.2s;
-    min-width: 150px;
-    max-width: 250px;
-    position: relative;
-    z-index: 10;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .group-card-node:hover {
-    background: var(--bg-hover);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     border-color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 00, 0, 0.1);
 }
 
-.group-node-header {
+.group-header-content {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    position: relative;
+    margin-bottom: 0.5rem;
 }
 
-.btn-edit-icon {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 0.9rem;
-    padding: 2px;
-    opacity: 0.4;
-    transition: opacity 0.2s, transform 0.2s;
-    line-height: 1;
-    display: none;
-}
-
-.group-card-node:hover .btn-edit-icon {
-    display: inline-block;
-    opacity: 1;
-}
-
-.btn-edit-icon:hover {
-    transform: scale(1.2);
-}
-
-.group-card-node .group-title {
+.group-title {
     margin: 0;
-    font-size: 1rem;
+    font-size: 1.2rem;
     font-weight: 600;
-    color: var(--primary);
-    cursor: pointer;
-}
-
-.group-card-node .group-lead {
-    margin-top: 0.5rem;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-}
-
-/* Member Leaf Node Styles */
-.member-node {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    border: 1px solid var(--border-primary);
-    border-radius: 8px;
-    background: var(--bg-primary);
-    cursor: pointer;
-    transition: all 0.2s;
-    min-width: 100px;
-}
-
-.member-node:hover {
-    border-color: var(--primary);
-    transform: translateY(-2px);
-}
-
-.member-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: var(--primary);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-.member-name {
-    font-size: 0.85rem;
     color: var(--text-primary);
+    cursor: pointer;
 }
 
+.group-title:hover {
+    color: var(--primary);
+}
 
-/* Member Pill Styles */
+/* Members Section */
 .members-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.25rem;
-    justify-content: center;
-    margin-top: 0.5rem;
-    padding-top: 0.5rem;
-    border-top: 1px solid var(--border-primary);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
 }
 
 .member-pill {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
-    padding: 2px 8px;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-primary);
-    border-radius: 12px;
-    font-size: 0.75rem;
+    padding: 6px 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.85rem;
     color: var(--text-primary);
     cursor: pointer;
     transition: all 0.2s;
-    text-decoration: none;
+    min-height: 40px;
 }
 
 .member-pill:hover {
-    background: var(--primary);
-    color: white;
+    background: var(--bg-hover, #f3f4f6);
     border-color: var(--primary);
     transform: translateY(-1px);
+    color: var(--primary);
 }
 
-.member-pill-avatar {
-    width: 16px;
-    height: 16px;
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 50%;
+.member-pill.is-lead {
+    background: #fafafa;
+    border-color: var(--border-primary);
+}
+
+.member-info {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.6rem;
-    font-weight: bold;
+    flex-direction: column;
+    line-height: 1.2;
 }
 
-/* Hide original list styles */
-.group-tree-node,
-.group-children,
-.members-section,
+.member-name {
+    font-weight: 500;
+}
+
+.member-role {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-transform: lowercase;
+    opacity: 0.8;
+}
+
+/* Subgroups Container */
+.subgroups-container {
+    margin-top: 1.5rem;
+    padding-left: 2rem;
+    /* More indentation */
+    border-left: 2px solid var(--border);
+    /* Visual guide line for nesting */
+    padding-top: 0.5rem;
+}
+
 .subgroups-label {
-    display: none;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.subgroups-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    /* More space between sibling sub-cards */
+}
+
+/* Recursive sizing adjustments for nested cards */
+.subgroups-list .group-card-node {
+    padding: 1.25rem;
+    /* More inner padding */
+    background: var(--bg-secondary);
+    /* Slight contrast for children */
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.subgroups-list .group-title {
+    font-size: 1rem;
+}
+
+.subgroups-list .member-pill {
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    min-height: 32px;
 }

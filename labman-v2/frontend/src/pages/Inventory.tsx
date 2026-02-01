@@ -1,13 +1,14 @@
 import { createSignal, createResource, Show, For } from 'solid-js';
 import { inventoryService } from '../services/inventory';
 import { serverService } from '../services/servers';
+import { bookService } from '../services/books';
 import { useAuth } from '../stores/auth';
-import type { Inventory, InventoryCreate, Server, ServerCreate } from '../types';
+import type { Inventory, InventoryCreate, Server, ServerCreate, Book, BookCreate } from '../types';
 import '../styles/tabs.css';
 
 export default function InventoryPage() {
     const { isAdmin } = useAuth();
-    const [activeTab, setActiveTab] = createSignal<'inventory' | 'servers'>('inventory');
+    const [activeTab, setActiveTab] = createSignal<'inventory' | 'servers' | 'books'>('inventory');
 
     // Inventory state
     const [inventory, { refetch: refetchInventory }] = createResource<Inventory[]>(inventoryService.getInventory);
@@ -28,6 +29,17 @@ export default function InventoryPage() {
         hostname: '',
         ip_address: '',
         status: 'active',
+    });
+
+    // Books state
+    const [books, { refetch: refetchBooks }] = createResource<Book[]>(bookService.getBooks);
+    const [showBookModal, setShowBookModal] = createSignal(false);
+    const [editingBook, setEditingBook] = createSignal<Book | null>(null);
+    const [bookFormData, setBookFormData] = createSignal<BookCreate>({
+        title: '',
+        author: '',
+        quantity: 1,
+        status: 'available',
     });
 
     // Inventory handlers
@@ -115,30 +127,84 @@ export default function InventoryPage() {
         }
     };
 
+    // Book handlers
+    const handleBookSubmit = async (e: Event) => {
+        e.preventDefault();
+        try {
+            if (editingBook()) {
+                await bookService.updateBook(editingBook()!.id, bookFormData());
+            } else {
+                await bookService.createBook(bookFormData());
+            }
+            setShowBookModal(false);
+            setEditingBook(null);
+            refetchBooks();
+            setBookFormData({ title: '', author: '', quantity: 1, status: 'available' });
+        } catch (error) {
+            console.error('Failed to save book:', error);
+        }
+    };
+
+    const handleBookEdit = (book: Book) => {
+        setEditingBook(book);
+        setBookFormData({
+            title: book.title,
+            author: book.author,
+            quantity: book.quantity,
+            status: book.status,
+            location: book.location,
+            description: book.description,
+        });
+        setShowBookModal(true);
+    };
+
+    const handleBookDelete = async (id: number) => {
+        if (confirm('Delete this book?')) {
+            try {
+                await bookService.deleteBook(id);
+                refetchBooks();
+            } catch (error) {
+                console.error('Failed to delete book:', error);
+            }
+        }
+    };
+
+    const openAddModal = () => {
+        if (activeTab() === 'inventory') setShowInventoryModal(true);
+        else if (activeTab() === 'servers') setShowServerModal(true);
+        else if (activeTab() === 'books') setShowBookModal(true);
+    };
+
     return (
         <div class="page">
             <div class="page-header">
-                <h1>Inventory & Servers</h1>
+                <h1>Inventory & Resources</h1>
                 <button
                     class="btn btn-primary"
-                    onClick={() => activeTab() === 'inventory' ? setShowInventoryModal(true) : setShowServerModal(true)}
+                    onClick={openAddModal}
                 >
-                    {activeTab() === 'inventory' ? 'Add Item' : 'Add Server'}
+                    Add {activeTab().charAt(0).toUpperCase() + activeTab().slice(1, activeTab().length === 5 ? -1 : undefined).replace('server', 'Server').replace('inventor', 'Item').replace('book', 'Book')}
                 </button>
             </div>
 
             <div class="tabs">
                 <button
                     class={activeTab() === 'inventory' ? 'tab active' : 'tab'}
-                    onClick={() => setActiveTab('inventory')}
+                    onClick={() => { console.log('Clicked Inventory'); setActiveTab('inventory'); }}
                 >
                     Inventory
                 </button>
                 <button
                     class={activeTab() === 'servers' ? 'tab active' : 'tab'}
-                    onClick={() => setActiveTab('servers')}
+                    onClick={() => { console.log('Clicked Servers'); setActiveTab('servers'); }}
                 >
                     Servers
+                </button>
+                <button
+                    class={activeTab() === 'books' ? 'tab active' : 'tab'}
+                    onClick={() => { console.log('Clicked Books'); setActiveTab('books'); }}
+                >
+                    Books
                 </button>
             </div>
 
@@ -233,6 +299,58 @@ export default function InventoryPage() {
                                                 </button>
                                                 <Show when={isAdmin()}>
                                                     <button class="btn btn-sm btn-danger" onClick={() => handleServerDelete(server.id)}>
+                                                        Delete
+                                                    </button>
+                                                </Show>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </For>
+                            </tbody>
+                        </table>
+                    </div>
+                </Show>
+            </Show>
+
+            {/* Books Tab */}
+            <Show when={activeTab() === 'books'}>
+                <Show when={books.loading}>
+                    <p>Loading books...</p>
+                </Show>
+
+                <Show when={books()}>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Author</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <For each={books()}>
+                                    {(book) => (
+                                        <tr>
+                                            <td>
+                                                <strong>{book.title}</strong>
+                                                <Show when={book.description}>
+                                                    <br /><small>{book.description}</small>
+                                                </Show>
+                                            </td>
+                                            <td>{book.author}</td>
+                                            <td>{book.location || '-'}</td>
+                                            <td>
+                                                <span class={`badge badge-${book.status}`}>{book.status}</span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm" onClick={() => handleBookEdit(book)}>
+                                                    Edit
+                                                </button>
+                                                <Show when={isAdmin()}>
+                                                    <button class="btn btn-sm btn-danger" onClick={() => handleBookDelete(book.id)}>
                                                         Delete
                                                     </button>
                                                 </Show>
@@ -384,6 +502,78 @@ export default function InventoryPage() {
                             </div>
                             <div class="modal-actions">
                                 <button type="button" class="btn" onClick={() => { setShowServerModal(false); setEditingServer(null); }}>
+                                    Cancel
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    Save
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </Show>
+
+            {/* Book Modal */}
+            <Show when={showBookModal()}>
+                <div class="modal-overlay" onClick={() => { setShowBookModal(false); setEditingBook(null); }}>
+                    <div class="modal" onClick={(e) => e.stopPropagation()}>
+                        <h2>{editingBook() ? 'Edit Book' : 'Add Book'}</h2>
+                        <form onSubmit={handleBookSubmit}>
+                            <div class="form-group">
+                                <label>Title</label>
+                                <input
+                                    type="text"
+                                    value={bookFormData().title}
+                                    onInput={(e) => setBookFormData({ ...bookFormData(), title: e.currentTarget.value })}
+                                    required
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label>Author</label>
+                                <input
+                                    type="text"
+                                    value={bookFormData().author}
+                                    onInput={(e) => setBookFormData({ ...bookFormData(), author: e.currentTarget.value })}
+                                    required
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label>Quantity</label>
+                                <input
+                                    type="number"
+                                    value={bookFormData().quantity}
+                                    onInput={(e) => setBookFormData({ ...bookFormData(), quantity: parseInt(e.currentTarget.value) })}
+                                    required
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label>Location</label>
+                                <input
+                                    type="text"
+                                    value={bookFormData().location || ''}
+                                    onInput={(e) => setBookFormData({ ...bookFormData(), location: e.currentTarget.value })}
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select
+                                    value={bookFormData().status}
+                                    onChange={(e) => setBookFormData({ ...bookFormData(), status: e.currentTarget.value })}
+                                >
+                                    <option value="available">Available</option>
+                                    <option value="borrowed">Borrowed</option>
+                                    <option value="lost">Lost</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Description</label>
+                                <textarea
+                                    value={bookFormData().description || ''}
+                                    onInput={(e) => setBookFormData({ ...bookFormData(), description: e.currentTarget.value })}
+                                />
+                            </div>
+                            <div class="modal-actions">
+                                <button type="button" class="btn" onClick={() => { setShowBookModal(false); setEditingBook(null); }}>
                                     Cancel
                                 </button>
                                 <button type="submit" class="btn btn-primary">

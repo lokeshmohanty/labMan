@@ -42,7 +42,7 @@
 }
 
 .task-item.status-pending {
-    border-left-color: var(--text-light);
+    border-left-color: var(--warning);
 }
 
 .task-header {
@@ -71,7 +71,7 @@
 }
 
 .task-status.status-pending {
-    background: var(--text-light);
+    background: var(--warning);
     color: white;
 }
 
@@ -180,7 +180,7 @@
 }
 
 .gantt-bar.status-pending {
-    background: var(--text-light);
+    background: var(--warning);
 }
 
 /* Links Section */

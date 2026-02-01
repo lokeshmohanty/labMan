@@ -218,3 +218,34 @@ export interface ResearchTaskCreate {
     end_date?: string;
     status?: string;
 }
+
+// Books
+export interface Book {
+    id: number;
+    title: string;
+    author: string;
+    quantity: number;
+    status: string; // available, borrowed, lost
+    location?: string;
+    description?: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface BookCreate {
+    title: string;
+    author: string;
+    quantity: number;
+    status: string;
+    location?: string;
+    description?: string;
+}
+
+export interface BookUpdate {
+    title?: string;
+    author?: string;
+    quantity?: number;
+    status?: string;
+    location?: string;
+    description?: string;
+}

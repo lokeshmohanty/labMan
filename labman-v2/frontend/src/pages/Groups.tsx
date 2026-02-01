@@ -76,132 +76,67 @@ export default function Groups() {
 
     const renderTree = (nodes: GroupTreeNode[]) => {
         return (
-            <div class="tree">
-                <ul>
-                    <For each={nodes}>
-                        {(node) => (
-                            <li>
-                                <div class="group-card-node">
-                                    <h3 class="group-title" onClick={() => navigate(`/groups/${node.id}`)}>
-                                        {node.name}
-                                    </h3>
-                                    <Show when={node.lead_name}>
-                                        <div class="group-lead">👑 {node.lead_name}</div>
-                                    </Show>
-                                </div>
-
-                                <Show when={(node.children && node.children.length > 0) || (node.members && node.members.length > 0)}>
-                                    <ul>
-                                        {/* Render Members as Leaf Nodes */}
-                                        <Show when={node.members}>
-                                            <For each={node.members}>
-                                                {(member) => (
-                                                    <li>
-                                                        <div class="member-node" onClick={() => navigate(`/research/${member.user_id}`)}>
-                                                            <span class="member-avatar">{member.user_name.charAt(0)}</span>
-                                                            <span class="member-name">{member.user_name}</span>
-                                                        </div>
-                                                    </li>
-                                                )}
-                                            </For>
-                                        </Show>
-
-                                        {/* Render Subgroups recursively */}
-                                        <Show when={node.children && node.children.length > 0}>
-                                            <For each={node.children}>
-                                                {(childNode) => (
-                                                    <li>
-                                                        <div class="group-card-node">
-                                                            <h3 class="group-title" onClick={() => navigate(`/groups/${childNode.id}`)}>
-                                                                {childNode.name}
-                                                            </h3>
-                                                            <Show when={childNode.lead_name}>
-                                                                <div class="group-lead">👑 {childNode.lead_name}</div>
-                                                            </Show>
-                                                        </div>
-
-                                                        <Show when={(childNode.children && childNode.children.length > 0) || (childNode.members && childNode.members.length > 0)}>
-                                                            <ul>
-                                                                {/* Grandchildren Members */}
-                                                                <Show when={childNode.members}>
-                                                                    <For each={childNode.members}>
-                                                                        {(member) => (
-                                                                            <li>
-                                                                                <div class="member-node" onClick={() => navigate(`/research/${member.user_id}`)}>
-                                                                                    <span class="member-avatar">{member.user_name.charAt(0)}</span>
-                                                                                    <span class="member-name">{member.user_name}</span>
-                                                                                </div>
-                                                                            </li>
-                                                                        )}
-                                                                    </For>
-                                                                </Show>
-
-                                                                {/* Grandchildren Subgroups (Recursive via renderTree internal logic if needed, but here we just need to recurse for children's children) */}
-                                                                {/* Actually, correct recursion is calling a RenderNode function. Let's make a recursive component or function. */}
-                                                                {/* SolidJS recursion is best done with a component or a self-calling function. I'll use a recursive function content. */}
-                                                                {renderTree(childNode.children).children[0].children}
-                                                                {/* Wait, calling renderTree again returns a div with ul. I need just the LIs or a way to embed. */}
-                                                            </ul>
-                                                        </Show>
-                                                    </li>
-                                                )}
-                                            </For>
-                                        </Show>
-                                    </ul>
-                                </Show>
-                            </li>
-                        )}
-                    </For>
-                </ul>
+            <div class="group-tree-wrapper">
+                <For each={nodes}>
+                    {(node) => <TreeNode node={node} />}
+                </For>
             </div>
         );
     };
 
-    // Better Recursive Component approach for SolidJS
     const TreeNode = (props: { node: GroupTreeNode }) => {
+        const hasChildren = props.node.children && props.node.children.length > 0;
+
         return (
-            <li>
-                <div class="group-card-node">
+            <div class="group-card-node">
+                <div class="group-header-content">
                     <div class="group-node-header">
                         <h3 class="group-title" onClick={() => navigate(`/groups/${props.node.id}`)}>
                             {props.node.name}
                         </h3>
-
                     </div>
-                    <Show when={props.node.lead_name}>
-                        <div class="group-lead">👑 {props.node.lead_name}</div>
-                    </Show>
+                </div>
 
-                    {/* Members as Pills */}
-                    <Show when={props.node.members && props.node.members.length > 0}>
-                        <div class="members-container">
-                            <For each={props.node.members}>
-                                {(member) => (
+                {/* Members Section */}
+                <Show when={props.node.members && props.node.members.length > 0}>
+                    <div class="members-container">
+                        <For each={props.node.members}>
+                            {(member) => {
+                                const isLead = member.user_id === props.node.lead_id;
+                                return (
                                     <div
-                                        class="member-pill"
+                                        class={`member-pill ${isLead ? 'is-lead' : ''}`}
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             navigate(`/research/${member.user_id}`);
                                         }}
-                                        title={member.user_name}
+                                        title={isLead ? `${member.user_name} (Group Lead)` : member.user_name}
                                     >
-                                        <span class="member-pill-avatar">{member.user_name.charAt(0)}</span>
-                                        {member.user_name.split(' ')[0]}
+                                        <div class="member-info">
+                                            <span class="member-name">{member.user_name}</span>
+                                            <Show when={isLead}>
+                                                <span class="member-role">group lead</span>
+                                            </Show>
+                                        </div>
                                     </div>
-                                )}
+                                );
+                            }}
+                        </For>
+                    </div>
+                </Show>
+
+                {/* Nested Subgroups */}
+                <Show when={hasChildren}>
+                    <div class="subgroups-container">
+                        <h4 class="subgroups-label">Subgroups</h4>
+                        <div class="subgroups-list">
+                            <For each={props.node.children}>
+                                {(child) => <TreeNode node={child} />}
                             </For>
                         </div>
-                    </Show>
-                </div>
-
-                <Show when={props.node.children && props.node.children.length > 0}>
-                    <ul>
-                        <For each={props.node.children}>
-                            {(child) => <TreeNode node={child} />}
-                        </For>
-                    </ul>
+                    </div>
                 </Show>
-            </li>
+            </div>
         );
     };
 
@@ -245,13 +180,7 @@ export default function Groups() {
                 {/* Research View - Tree Structure */}
                 <Show when={viewMode() === 'research'}>
                     <div class="group-tree-container">
-                        <div class="tree">
-                            <ul>
-                                <For each={groups() || []}>
-                                    {(node) => <TreeNode node={node} />}
-                                </For>
-                            </ul>
-                        </div>
+                        {renderTree(groups() || [])}
                     </div>
                 </Show>
 
@@ -263,7 +192,6 @@ export default function Groups() {
                                 <tr>
                                     <th>Name</th>
                                     <th>Description</th>
-                                    <th>Lead</th>
                                     <th>Members</th>
                                     <th>Actions</th>
                                 </tr>
@@ -278,7 +206,6 @@ export default function Groups() {
                                                 </strong>
                                             </td>
                                             <td>{group.description || '-'}</td>
-                                            <td>{group.lead_name || '-'}</td>
                                             <td>{group.member_count}</td>
                                             <td>
                                                 <Show when={group.has_project}>
