@@ -58,6 +58,11 @@ url = "https://test.pypi.org/simple/"
 publish-url = "https://test.pypi.org/legacy/"
 explicit = true
 
+[tool.uv.workspace]
+members = [
+    "labman-v2/backend",
+]
+
 [project.urls]
 Homepage = "https://github.com/lokeshmohanty/labman"
 Issues = "https://github.com/lokeshmohanty/labman/issues"

@@ -1,0 +1,258 @@
+.groups-page {
+    padding: 2rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    margin: 0;
+    color: var(--text-primary);
+}
+
+/* Tree Visualization Styles */
+.group-tree-container {
+    padding: 2rem 0;
+    overflow-x: auto;
+    text-align: center;
+}
+
+.tree ul {
+    padding-top: 20px;
+    position: relative;
+    transition: all 0.5s;
+    display: flex;
+    justify-content: center;
+    margin: 0;
+    padding-left: 0;
+}
+
+.tree li {
+    float: left;
+    text-align: center;
+    list-style-type: none;
+    position: relative;
+    padding: 20px 5px 0 5px;
+    transition: all 0.5s;
+}
+
+/* Connectors using pseudo-elements */
+.tree li::before,
+.tree li::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 50%;
+    border-top: 2px solid var(--border-primary);
+    width: 50%;
+    height: 20px;
+}
+
+.tree li::after {
+    right: auto;
+    left: 50%;
+    border-left: 2px solid var(--border-primary);
+}
+
+/* Remove connectors from the only child */
+.tree li:only-child::after,
+.tree li:only-child::before {
+    display: none;
+}
+
+/* Remove space from the only child */
+.tree li:only-child {
+    padding-top: 0;
+}
+
+/* Remove left connector from first child and right connector from last child */
+.tree li:first-child::before,
+.tree li:last-child::after {
+    border: 0 none;
+}
+
+/* Adding back the vertical connector to the last nodes */
+.tree li:last-child::before {
+    border-right: 2px solid var(--border-primary);
+    border-radius: 0 5px 0 0;
+}
+
+.tree li:first-child::after {
+    border-radius: 5px 0 0 0;
+}
+
+/* Downward connector from parents */
+.tree ul ul::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    border-left: 2px solid var(--border-primary);
+    width: 0;
+    height: 20px;
+}
+
+/* Node Styles */
+.group-card-node {
+    display: inline-block;
+    border: 1px solid var(--border-primary);
+    padding: 0.75rem 1rem;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-family: arial, verdana, tahoma;
+    font-size: 14px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    transition: all 0.2s;
+    min-width: 150px;
+    max-width: 250px;
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.group-card-node:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 00, 0, 0.1);
+}
+
+.group-node-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    position: relative;
+}
+
+.btn-edit-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 2px;
+    opacity: 0.4;
+    transition: opacity 0.2s, transform 0.2s;
+    line-height: 1;
+    display: none;
+}
+
+.group-card-node:hover .btn-edit-icon {
+    display: inline-block;
+    opacity: 1;
+}
+
+.btn-edit-icon:hover {
+    transform: scale(1.2);
+}
+
+.group-card-node .group-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary);
+    cursor: pointer;
+}
+
+.group-card-node .group-lead {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* Member Leaf Node Styles */
+.member-node {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    background: var(--bg-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 100px;
+}
+
+.member-node:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.member-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.member-name {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+}
+
+
+/* Member Pill Styles */
+.members-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    justify-content: center;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border-primary);
+}
+
+.member-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 2px 8px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.member-pill:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.member-pill-avatar {
+    width: 16px;
+    height: 16px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: bold;
+}
+
+/* Hide original list styles */
+.group-tree-node,
+.group-children,
+.members-section,
+.subgroups-label {
+    display: none;
+}
