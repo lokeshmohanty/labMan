@@ -1,0 +1,161 @@
+.groups-page {
+    padding: 2rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    margin: 0;
+    color: var(--text-primary);
+}
+
+/* Nested Card Layout */
+.group-tree-container {
+    padding: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.group-tree-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.group-card-node {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.group-card-node:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border-color: var(--primary);
+}
+
+.group-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.group-title {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.group-title:hover {
+    color: var(--primary);
+}
+
+/* Members Section */
+.members-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.member-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 40px;
+}
+
+.member-pill:hover {
+    background: var(--bg-hover, #f3f4f6);
+    border-color: var(--primary);
+    transform: translateY(-1px);
+    color: var(--primary);
+}
+
+.member-pill.is-lead {
+    background: #fafafa;
+    border-color: var(--border-primary);
+}
+
+.member-info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.member-name {
+    font-weight: 500;
+}
+
+.member-role {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-transform: lowercase;
+    opacity: 0.8;
+}
+
+/* Subgroups Container */
+.subgroups-container {
+    margin-top: 1.5rem;
+    padding-left: 2rem;
+    /* More indentation */
+    border-left: 2px solid var(--border);
+    /* Visual guide line for nesting */
+    padding-top: 0.5rem;
+}
+
+.subgroups-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.subgroups-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    /* More space between sibling sub-cards */
+}
+
+/* Recursive sizing adjustments for nested cards */
+.subgroups-list .group-card-node {
+    padding: 1.25rem;
+    /* More inner padding */
+    background: var(--bg-secondary);
+    /* Slight contrast for children */
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.subgroups-list .group-title {
+    font-size: 1rem;
+}
+
+.subgroups-list .member-pill {
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    min-height: 32px;
+}
