@@ -70,7 +70,14 @@
 
         <!-- Tasks Timeline -->
         <div>
-            <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Tasks Timeline</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <h3 style="color: var(--text-primary); margin: 0;">Tasks Timeline</h3>
+                {% if plan.tasks %}
+                <button id="toggle-all-tasks" type="button" class="btn btn-secondary btn-sm"
+                    style="font-size: 0.8rem; padding: 0.25rem 0.75rem;" onclick="toggleAllTasks()">Show All
+                    Tasks</button>
+                {% endif %}
+            </div>
 
             {% if plan.tasks %}
 
@@ -120,9 +127,10 @@
         </div>
         {% endif %}
 
-        <ul style="list-style: none; padding: 0;">
+        <ul id="tasks-list" style="list-style: none; padding: 0;">
             {% for task in plan.tasks %}
-            <li
+            <li class="task-item" data-start-date="{{ task.start_date[:10] if task.start_date else '' }}"
+                data-due-date="{{ task.due_date[:10] if task.due_date else '' }}"
                 style="background-color: var(--bg-hover); padding: 0.75rem; border-radius: 8px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-primary);">
                 <div>
                     <div
@@ -199,7 +207,65 @@
     if (viewerElement) {
         viewerElement.innerHTML = marked.parse(commentsText || '*No comments yet.*');
     }
+
+    // Filter tasks to current duration by default
+    filterTasksToCurrentDuration();
     });
+
+    // Task filtering
+    let showingAllTasks = false;
+    const DURATION_START = '{{ timeline_start }}';
+    const DURATION_END = '{{ timeline_end }}';
+
+    function isTaskInCurrentDuration(taskItem) {
+        const startDate = taskItem.dataset.startDate;
+        const dueDate = taskItem.dataset.dueDate;
+
+        // If task has no dates, show it by default
+        if (!startDate && !dueDate) return true;
+
+        // A task overlaps the current duration if:
+        // task_start <= duration_end AND task_due >= duration_start
+        const taskStart = startDate || dueDate;
+        const taskDue = dueDate || startDate;
+
+        return taskStart <= DURATION_END && taskDue >= DURATION_START;
+    }
+
+    function filterTasksToCurrentDuration() {
+        const tasks = document.querySelectorAll('.task-item');
+        if (!tasks.length) return;
+
+        let visibleCount = 0;
+        tasks.forEach(task => {
+            if (isTaskInCurrentDuration(task)) {
+                task.style.display = '';
+                visibleCount++;
+            } else {
+                task.style.display = 'none';
+            }
+        });
+
+        // Update button text with count info
+        const btn = document.getElementById('toggle-all-tasks');
+        if (btn) {
+            btn.textContent = `Show All Tasks (${tasks.length})`;
+        }
+    }
+
+    function toggleAllTasks() {
+        showingAllTasks = !showingAllTasks;
+        const tasks = document.querySelectorAll('.task-item');
+        const btn = document.getElementById('toggle-all-tasks');
+
+        if (showingAllTasks) {
+            tasks.forEach(task => { task.style.display = ''; });
+            if (btn) btn.textContent = 'Show Current Tasks';
+        } else {
+            filterTasksToCurrentDuration();
+            if (btn) btn.textContent = `Show All Tasks (${tasks.length})`;
+        }
+    }
 
     function toggleCommentsEdit() {
         document.getElementById('comments-viewer').style.display = 'none';
