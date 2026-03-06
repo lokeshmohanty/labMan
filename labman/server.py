@@ -20,6 +20,7 @@ from labman.lib.content import upload_content, get_content, delete_content, get_
 from labman.lib.inventory import add_inventory_item, get_all_inventory, update_inventory_item, delete_inventory_item
 from labman.lib.servers import add_server, get_all_servers, update_server, delete_server, get_server_by_id
 from labman.lib.research import get_research_plan, update_research_problem, add_research_task, update_research_task_status, delete_research_task, get_task_by_id, update_research_links, update_task_due_date, update_task_start_date
+from labman.lib.projects import get_project_by_group, create_project, update_project, toggle_project_visibility, update_project_comments, add_project_task, update_project_task_status, delete_project_task, update_project_task_due_date, update_project_task_start_date, get_project_by_id, has_project, get_project_task_by_id
 
 app = Flask(__name__)
 # Fix for gunicorn / proxy support
@@ -580,7 +581,8 @@ def group_detail(group_id):
     
     members = get_group_members(group_id)
     all_users = get_all_users()
-    return render_template('group_detail.html', group=group, members=members, all_users=all_users)
+    project = get_project_by_group(group_id)
+    return render_template('group_detail.html', group=group, members=members, all_users=all_users, project=project)
 
 @app.route('/groups/<int:group_id>/add_member', methods=['POST'])
 @require_login
@@ -639,6 +641,13 @@ def delete_group_route(group_id):
 def research():
     from labman.lib.groups import get_research_tree
     tree = get_research_tree()
+    # Attach project info to each group node
+    def attach_project_info(nodes):
+        for node in nodes:
+            node['has_project'] = has_project(node['id'])
+            if node.get('subgroups'):
+                attach_project_info(node['subgroups'])
+    attach_project_info(tree)
     return render_template('research.html', tree=tree)
 
 # Meeting Management
@@ -646,10 +655,16 @@ def research():
 @require_login
 def meetings():
     tag_filter = request.args.get('tag')
+    group_filter = request.args.get('group')
+    
     if tag_filter:
         all_meetings = get_meetings_by_tags([tag_filter])
     else:
         all_meetings = get_all_meetings()
+        
+    if group_filter and group_filter.isdigit():
+        group_id = int(group_filter)
+        all_meetings = [m for m in all_meetings if m.get('group_id') == group_id]
 
     this_week = get_meetings_this_week()
 
@@ -663,7 +678,11 @@ def meetings():
     db_tags = get_all_tags()
     available_tags = sorted(list(set(default_tags + db_tags)))
     
-    return render_template('meetings.html', meetings=all_meetings, this_week=this_week, available_tags=available_tags)
+    # Get user groups for filter dropdown
+    user = get_current_user()
+    user_groups = get_user_groups(user['id'])
+    
+    return render_template('meetings.html', meetings=all_meetings, this_week=this_week, available_tags=available_tags, groups=user_groups)
 
 @app.route('/meetings/calendar/<int:year>/<int:month>')
 @require_login
@@ -682,9 +701,10 @@ def create_meeting_route():
         tags_str = request.form.get('tags', '')
         tags = [t.strip() for t in tags_str.split(',') if t.strip()]
         summary = request.form.get('summary', '')
+        is_project_meeting = request.form.get('is_project_meeting') == 'on'
         
         user = get_current_user()
-        if create_meeting(title, description, meeting_time, user['id'], group_id, tags, summary):
+        if create_meeting(title, description, meeting_time, user['id'], group_id, tags, summary, is_project_meeting):
             flash('Meeting created successfully!', 'success')
             return redirect(url_for('meetings'))
         else:
@@ -700,6 +720,11 @@ def create_meeting_route():
     
     # Set default time to now
     default_time = datetime.now().strftime('%Y-%m-%dT%H:%M')
+    
+    # Check which groups have projects
+    from labman.lib.projects import has_project
+    for group in user_groups:
+        group['has_project'] = has_project(group['id'])
     
     return render_template('meeting_form.html', groups=user_groups, available_tags=available_tags, default_time=default_time)
 
@@ -725,12 +750,13 @@ def edit_meeting(meeting_id):
         tags_str = request.form.get('tags', '')
         tags = [t.strip() for t in tags_str.split(',') if t.strip()]
         summary = request.form.get('summary', '')
+        is_project_meeting = request.form.get('is_project_meeting') == 'on'
         
         # Check if time changed
         old_time = meeting['meeting_time']
         time_changed = (new_time != old_time)
         
-        if update_meeting(meeting_id, title, description, new_time, group_id, tags, summary, send_notification=time_changed):
+        if update_meeting(meeting_id, title, description, new_time, group_id, tags, summary, send_notification=time_changed, is_project_meeting=is_project_meeting):
             flash('Meeting updated successfully!', 'success')
             return redirect(url_for('meeting_detail', meeting_id=meeting_id))
         else:
@@ -744,6 +770,11 @@ def edit_meeting(meeting_id):
     default_tags = [t.strip() for t in os.getenv('DEFAULT_MEETING_TAGS', '').split(',') if t.strip()]
     db_tags = get_all_tags()
     available_tags = sorted(list(set(default_tags + db_tags)))
+    
+    # Check which groups have projects
+    from labman.lib.projects import has_project
+    for group in user_groups:
+        group['has_project'] = has_project(group['id'])
     
     return render_template('meeting_form.html', meeting=meeting, groups=user_groups, is_edit=True, available_tags=available_tags)
 
@@ -1231,6 +1262,248 @@ def set_group_lead_route(group_id, user_id):
     else:
         flash('Failed to update group lead', 'error')
     return redirect(url_for('group_detail', group_id=group_id))
+
+# --- Group Project Routes ---
+
+@app.route('/groups/<int:group_id>/project/create', methods=['POST'])
+@require_login
+def create_project_route(group_id):
+    group = get_group_by_id(group_id)
+    if not group:
+        flash('Group not found', 'error')
+        return redirect(url_for('groups'))
+    if group.get('lead_id') != session.get('user_id'):
+        flash('Only the group lead can create a project', 'error')
+        return redirect(url_for('group_detail', group_id=group_id))
+    if has_project(group_id):
+        flash('This group already has a project', 'error')
+        return redirect(url_for('group_detail', group_id=group_id))
+    project_id = create_project(group_id, title=group['name'] + ' Project')
+    if project_id:
+        flash('Project created!', 'success')
+    else:
+        flash('Failed to create project', 'error')
+    return redirect(url_for('project_detail_route', group_id=group_id))
+
+@app.route('/groups/<int:group_id>/project')
+@require_login
+def project_detail_route(group_id):
+    group = get_group_by_id(group_id)
+    if not group:
+        flash('Group not found', 'error')
+        return redirect(url_for('groups'))
+    project = get_project_by_group(group_id)
+    if not project:
+        flash('No project found for this group', 'error')
+        return redirect(url_for('group_detail', group_id=group_id))
+    
+    today = datetime.now().date()
+    timeline_start = (today - timedelta(days=7)).strftime('%Y-%m-%d')
+    timeline_end = (today + timedelta(days=14)).strftime('%Y-%m-%d')
+    
+    current_user = get_current_user()
+    can_edit = group.get('lead_id') == current_user['id']
+    can_edit_comments = current_user['is_admin']
+    
+    # Check if user is a member of the group
+    from labman.lib.groups import get_group_members
+    is_member = any(m['id'] == current_user['id'] for m in get_group_members(group_id))
+    can_schedule_meeting = current_user['is_admin'] or is_member
+    
+    return render_template('project_detail.html', group=group, project=project,
+                         timeline_start=timeline_start, timeline_end=timeline_end,
+                         can_edit=can_edit, can_edit_comments=can_edit_comments,
+                         can_schedule_meeting=can_schedule_meeting)
+
+@app.route('/groups/<int:group_id>/project/update', methods=['POST'])
+@require_login
+def update_project_route(group_id):
+    group = get_group_by_id(group_id)
+    if not group:
+        flash('Group not found', 'error')
+        return redirect(url_for('groups'))
+    if group.get('lead_id') != session.get('user_id'):
+        flash('Unauthorized', 'error')
+        return redirect(url_for('project_detail_route', group_id=group_id))
+    project = get_project_by_group(group_id)
+    if not project:
+        flash('No project found', 'error')
+        return redirect(url_for('group_detail', group_id=group_id))
+    
+    title = request.form.get('title')
+    problem_statement = request.form.get('problem_statement')
+    progress = request.form.get('progress')
+    github_link = request.form.get('github_link')
+    
+    if update_project(project['id'], title=title, problem_statement=problem_statement,
+                      progress=progress, github_link=github_link):
+        flash('Project updated!', 'success')
+    else:
+        flash('Failed to update project', 'error')
+    return redirect(url_for('project_detail_route', group_id=group_id))
+
+@app.route('/groups/<int:group_id>/project/toggle-visibility', methods=['POST'])
+@require_login
+def toggle_project_visibility_route(group_id):
+    group = get_group_by_id(group_id)
+    if not group:
+        flash('Group not found', 'error')
+        return redirect(url_for('groups'))
+    if group.get('lead_id') != session.get('user_id'):
+        flash('Unauthorized', 'error')
+        return redirect(url_for('project_detail_route', group_id=group_id))
+    project = get_project_by_group(group_id)
+    if not project:
+        flash('No project found', 'error')
+        return redirect(url_for('group_detail', group_id=group_id))
+    
+    if toggle_project_visibility(project['id']):
+        flash('Project visibility toggled!', 'success')
+    else:
+        flash('Failed to toggle visibility', 'error')
+    return redirect(url_for('project_detail_route', group_id=group_id))
+
+@app.route('/groups/<int:group_id>/project/tasks/add', methods=['POST'])
+@require_login
+def add_project_task_route(group_id):
+    group = get_group_by_id(group_id)
+    if not group:
+        flash('Group not found', 'error')
+        return redirect(url_for('groups'))
+    if group.get('lead_id') != session.get('user_id'):
+        flash('Unauthorized', 'error')
+        return redirect(url_for('project_detail_route', group_id=group_id))
+    project = get_project_by_group(group_id)
+    if not project:
+        flash('No project found', 'error')
+        return redirect(url_for('group_detail', group_id=group_id))
+    
+    task_name = request.form.get('task_name')
+    due_date = request.form.get('due_date')
+    start_date = request.form.get('start_date')
+    
+    if add_project_task(project['id'], task_name, due_date, start_date=start_date):
+        flash('Task added!', 'success')
+    else:
+        flash('Failed to add task', 'error')
+    return redirect(url_for('project_detail_route', group_id=group_id))
+
+@app.route('/groups/<int:group_id>/project/tasks/<int:task_id>/status', methods=['POST'])
+@require_login
+def update_project_task_status_route(group_id, task_id):
+    group = get_group_by_id(group_id)
+    if not group:
+        return jsonify({'error': 'Group not found'}), 404
+    if group.get('lead_id') != session.get('user_id'):
+        return jsonify({'error': 'Unauthorized'}), 403
+    status = request.form.get('status')
+    if update_project_task_status(task_id, status):
+        flash('Task status updated!', 'success')
+    else:
+        flash('Failed to update task status', 'error')
+    return redirect(url_for('project_detail_route', group_id=group_id))
+
+@app.route('/groups/<int:group_id>/project/tasks/<int:task_id>/delete', methods=['POST'])
+@require_login
+def delete_project_task_route(group_id, task_id):
+    group = get_group_by_id(group_id)
+    if not group:
+        flash('Group not found', 'error')
+        return redirect(url_for('groups'))
+    if group.get('lead_id') != session.get('user_id'):
+        flash('Unauthorized', 'error')
+        return redirect(url_for('project_detail_route', group_id=group_id))
+    if delete_project_task(task_id):
+        flash('Task deleted!', 'success')
+    else:
+        flash('Failed to delete task', 'error')
+    return redirect(url_for('project_detail_route', group_id=group_id))
+
+@app.route('/groups/<int:group_id>/project/tasks/<int:task_id>/due-date', methods=['POST'])
+@require_login
+def update_project_task_due_date_route(group_id, task_id):
+    group = get_group_by_id(group_id)
+    if not group:
+        return jsonify({'error': 'Group not found'}), 404
+    if group.get('lead_id') != session.get('user_id'):
+        return jsonify({'error': 'Unauthorized'}), 403
+    new_due_date = request.form.get('due_date')
+    if update_project_task_due_date(task_id, new_due_date):
+        flash('Due date updated!', 'success')
+    else:
+        flash('Failed to update due date', 'error')
+    return redirect(url_for('project_detail_route', group_id=group_id))
+
+@app.route('/groups/<int:group_id>/project/tasks/<int:task_id>/start-date', methods=['POST'])
+@require_login
+def update_project_task_start_date_route(group_id, task_id):
+    group = get_group_by_id(group_id)
+    if not group:
+        return jsonify({'error': 'Group not found'}), 404
+    if group.get('lead_id') != session.get('user_id'):
+        return jsonify({'error': 'Unauthorized'}), 403
+    new_start_date = request.form.get('start_date')
+    if update_project_task_start_date(task_id, new_start_date):
+        flash('Start date updated!', 'success')
+    else:
+        flash('Failed to update start date', 'error')
+    return redirect(url_for('project_detail_route', group_id=group_id))
+
+@app.route('/groups/<int:group_id>/project/update-comments', methods=['POST'])
+@require_login
+def update_project_comments_route(group_id):
+    group = get_group_by_id(group_id)
+    if not group:
+        flash('Group not found', 'error')
+        return redirect(url_for('groups'))
+    if not session.get('is_admin'):
+        flash('Only admins can edit project comments', 'error')
+        return redirect(url_for('project_detail_route', group_id=group_id))
+    project = get_project_by_group(group_id)
+    if not project:
+        flash('No project found', 'error')
+        return redirect(url_for('group_detail', group_id=group_id))
+    comments = request.form.get('comments', '')
+    if update_project_comments(project['id'], comments):
+        flash('Project comments updated!', 'success')
+    else:
+        flash('Failed to update comments', 'error')
+    return redirect(url_for('project_detail_route', group_id=group_id))
+
+@app.route('/groups/<int:group_id>/project/upload', methods=['POST'])
+@require_login
+def upload_project_content_route(group_id):
+    group = get_group_by_id(group_id)
+    if not group:
+        flash('Group not found', 'error')
+        return redirect(url_for('groups'))
+    if group.get('lead_id') != session.get('user_id'):
+        flash('Unauthorized', 'error')
+        return redirect(url_for('project_detail_route', group_id=group_id))
+    project = get_project_by_group(group_id)
+    if not project:
+        flash('No project found', 'error')
+        return redirect(url_for('group_detail', group_id=group_id))
+    
+    file = request.files.get('file')
+    title = request.form.get('title', '')
+    description = request.form.get('description', '')
+    
+    if not file or not file.filename:
+        flash('No file selected', 'error')
+        return redirect(url_for('project_detail_route', group_id=group_id))
+    
+    user = get_current_user()
+    if upload_content(file, title, description, user['id'], group_id=group_id):
+        # Link the content to the project by updating project_id
+        from labman.lib.data import query_db, execute_db
+        latest = query_db('SELECT id FROM content WHERE uploaded_by = ? ORDER BY created_at DESC LIMIT 1', [user['id']], one=True)
+        if latest:
+            execute_db('UPDATE content SET project_id = ? WHERE id = ?', (project['id'], latest['id']))
+        flash('Document uploaded!', 'success')
+    else:
+        flash('Failed to upload document', 'error')
+    return redirect(url_for('project_detail_route', group_id=group_id))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9000, debug=True)

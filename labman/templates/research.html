@@ -9,11 +9,20 @@
     {% macro render_group(group) %}
     <div
         style="border: 1px solid var(--border-primary); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; background-color: var(--bg-secondary);">
-        <h2 style="color: var(--primary); margin-bottom: 0.5rem; font-size: 1.5rem;">
-            <a href="{{ url_for('group_detail', group_id=group.id) }}" style="text-decoration: none; color: inherit;">
-                {{ group.name }}
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <h2 style="color: var(--primary); margin: 0; font-size: 1.5rem;">
+                <a href="{{ url_for('group_detail', group_id=group.id) }}"
+                    style="text-decoration: none; color: inherit;">
+                    {{ group.name }}
+                </a>
+            </h2>
+            {% if group.has_project %}
+            <a href="{{ url_for('project_detail_route', group_id=group.id) }}" class="btn btn-secondary btn-sm"
+                style="font-size: 0.85rem; padding: 0.3rem 0.75rem;">
+                View Project →
             </a>
-        </h2>
+            {% endif %}
+        </div>
         {% if group.description %}
         <p style="color: var(--text-secondary); margin-bottom: 1rem;">{{ group.description }}</p>
         {% endif %}

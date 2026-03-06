@@ -4,13 +4,13 @@ from labman.lib.email_queue import email_queue
 from datetime import datetime
 import calendar
 
-def create_meeting(title, description, meeting_time, created_by, group_id=None, tags=None, summary=None):
+def create_meeting(title, description, meeting_time, created_by, group_id=None, tags=None, summary=None, is_project_meeting=False):
     """Create a new meeting"""
     try:
         tags_str = ','.join(tags) if tags else None
         cursor = execute_db(
-            'INSERT INTO meetings (title, description, meeting_time, created_by, group_id, tags, summary) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            (title, description, meeting_time, created_by, group_id, tags_str, summary)
+            'INSERT INTO meetings (title, description, meeting_time, created_by, group_id, tags, summary, is_project_meeting) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            (title, description, meeting_time, created_by, group_id, tags_str, summary, 1 if is_project_meeting else 0)
         )
         meeting_id = cursor.lastrowid
         
@@ -132,13 +132,25 @@ def get_meetings_by_group(group_id):
     ''', [group_id])
     return [dict(meeting) for meeting in meetings]
 
-def update_meeting(meeting_id, title, description, meeting_time, group_id=None, tags=None, summary=None, send_notification=False):
+def get_project_meetings_by_group(group_id):
+    """Get all project meetings for a specific group"""
+    meetings = query_db('''
+        SELECT m.*, u.name as created_by_name, g.name as group_name
+        FROM meetings m
+        LEFT JOIN users u ON m.created_by = u.id
+        LEFT JOIN research_groups g ON m.group_id = g.id
+        WHERE m.group_id = ? AND m.is_project_meeting = 1
+        ORDER BY m.meeting_time DESC
+    ''', [group_id])
+    return [dict(meeting) for meeting in meetings]
+
+def update_meeting(meeting_id, title, description, meeting_time, group_id=None, tags=None, summary=None, send_notification=False, is_project_meeting=False):
     """Update meeting information"""
     try:
         tags_str = ','.join(tags) if tags else None
         execute_db(
-            'UPDATE meetings SET title = ?, description = ?, meeting_time = ?, group_id = ?, tags = ?, summary = ? WHERE id = ?',
-            (title, description, meeting_time, group_id, tags_str, summary, meeting_id)
+            'UPDATE meetings SET title = ?, description = ?, meeting_time = ?, group_id = ?, tags = ?, summary = ?, is_project_meeting = ? WHERE id = ?',
+            (title, description, meeting_time, group_id, tags_str, summary, 1 if is_project_meeting else 0, meeting_id)
         )
         
         # Send notification if time changed

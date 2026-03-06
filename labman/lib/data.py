@@ -83,6 +83,7 @@ def init_db():
             group_id INTEGER,
             tags TEXT,
             summary TEXT,
+            is_project_meeting BOOLEAN DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (created_by) REFERENCES users(id),
             FOREIGN KEY (group_id) REFERENCES research_groups(id)
@@ -184,6 +185,44 @@ def init_db():
         )
     ''')
     
+    # Group Projects table
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS group_projects (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            group_id INTEGER UNIQUE NOT NULL,
+            title TEXT NOT NULL DEFAULT 'Untitled Project',
+            problem_statement TEXT,
+            progress TEXT,
+            github_link TEXT,
+            is_public BOOLEAN DEFAULT 0,
+            comments TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (group_id) REFERENCES research_groups(id) ON DELETE CASCADE
+        )
+    ''')
+    
+    # Project Tasks table
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS project_tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id INTEGER NOT NULL,
+            task_name TEXT NOT NULL,
+            due_date DATE,
+            start_date DATE,
+            previous_due_date DATE,
+            status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (project_id) REFERENCES group_projects(id) ON DELETE CASCADE
+        )
+    ''')
+    
+    # Add project_id column to content table if not exists
+    try:
+        db.execute('SELECT project_id FROM content LIMIT 1')
+    except Exception:
+        db.execute('ALTER TABLE content ADD COLUMN project_id INTEGER REFERENCES group_projects(id)')
+    
     # Password reset tokens table
     db.execute('''
         CREATE TABLE IF NOT EXISTS password_reset_tokens (
@@ -211,6 +250,12 @@ def init_db():
         )
     ''')
     
+    # Add is_project_meeting column to meetings table if not exists
+    try:
+        db.execute('SELECT is_project_meeting FROM meetings LIMIT 1')
+    except Exception:
+        db.execute('ALTER TABLE meetings ADD COLUMN is_project_meeting BOOLEAN DEFAULT 0')
+
     # Audit logs table
     db.execute('''
         CREATE TABLE IF NOT EXISTS audit_logs (

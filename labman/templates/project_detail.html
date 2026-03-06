@@ -1,0 +1,491 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.title }} - {{ lab_name }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="margin-bottom: 2rem;">
+        <a href="{{ url_for('group_detail', group_id=group.id) }}"
+            style="color: var(--primary); text-decoration: none;">
+            ← Back to {{ group.name }}
+        </a>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+        <div style="flex: 1;">
+            {% if can_edit %}
+            <div id="title-display">
+                <h1 style="color: var(--primary); margin-bottom: 0.5rem; cursor: pointer;" onclick="toggleTitleEdit()"
+                    title="Click to edit">{{ project.title }}</h1>
+            </div>
+            <form id="title-edit" method="POST" action="{{ url_for('update_project_route', group_id=group.id) }}"
+                style="display: none; margin-bottom: 0.5rem;">
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <input type="text" name="title" value="{{ project.title }}" class="form-control"
+                        style="font-size: 1.5rem; font-weight: bold;">
+                    <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleTitleEdit()">Cancel</button>
+                </div>
+            </form>
+            {% else %}
+            <h1 style="color: var(--primary); margin-bottom: 0.5rem;">{{ project.title }}</h1>
+            {% endif %}
+            <p style="color: var(--text-light);">{{ group.name }}</p>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            {% if project.github_link %}
+            <a href="{{ project.github_link }}" target="_blank" class="btn btn-secondary-light"
+                style="display: inline-block; width: auto; font-size: 0.9rem;">
+                GitHub Repository
+            </a>
+            {% endif %}
+
+            {% if can_edit %}
+            <form method="POST" action="{{ url_for('toggle_project_visibility_route', group_id=group.id) }}"
+                style="display: inline;">
+                {% if project.is_public %}
+                <button type="submit" class="btn btn-secondary btn-sm" title="Currently Public — click to make Private">
+                    🌐 Public
+                </button>
+                {% else %}
+                <button type="submit" class="btn btn-secondary btn-sm" title="Currently Private — click to make Public">
+                    🔒 Private
+                </button>
+                {% endif %}
+            </form>
+            {% else %}
+            {% if project.is_public %}
+            <span class="badge" style="background-color: var(--success-light); color: var(--success-text);">🌐
+                Public</span>
+            {% else %}
+            <span class="badge" style="background-color: var(--warning-light); color: var(--warning-text);">🔒
+                Private</span>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="grid grid-2">
+        <!-- Left Column: Problem Statement, Progress, Documents -->
+        <div>
+            <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+            <!-- Problem Statement -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <h3 style="color: var(--text-primary); margin: 0;">Problem Statement</h3>
+                {% if can_edit %}
+                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleEdit('problem')">Edit</button>
+                {% endif %}
+            </div>
+            <div id="problem-content"
+                style="background-color: var(--bg-secondary); color: var(--text-primary); padding: 1.5rem; border-radius: 4px; border: 1px solid var(--border-primary); min-height: 200px;">
+            </div>
+            {% if can_edit %}
+            <form id="problem-edit" method="POST" action="{{ url_for('update_project_route', group_id=group.id) }}"
+                style="display: none; margin-top: 0.5rem;">
+                <textarea name="problem_statement" class="form-control"
+                    rows="8">{{ project.problem_statement or '' }}</textarea>
+                <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
+                    <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                    <button type="button" class="btn btn-secondary btn-sm"
+                        onclick="toggleEdit('problem')">Cancel</button>
+                </div>
+            </form>
+            {% endif %}
+
+            <!-- Progress -->
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; margin-top: 2rem;">
+                <h3 style="color: var(--text-primary); margin: 0;">Progress</h3>
+                {% if can_edit %}
+                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleEdit('progress')">Edit</button>
+                {% endif %}
+            </div>
+            <div id="progress-content"
+                style="background-color: var(--bg-secondary); color: var(--text-primary); padding: 1.5rem; border-radius: 4px; border: 1px solid var(--border-primary); min-height: 300px;">
+            </div>
+            {% if can_edit %}
+            <form id="progress-edit" method="POST" action="{{ url_for('update_project_route', group_id=group.id) }}"
+                style="display: none; margin-top: 0.5rem;">
+                <textarea name="progress" class="form-control" rows="10">{{ project.progress or '' }}</textarea>
+                <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
+                    <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                    <button type="button" class="btn btn-secondary btn-sm"
+                        onclick="toggleEdit('progress')">Cancel</button>
+                </div>
+            </form>
+            {% endif %}
+
+            <!-- GitHub Link -->
+            {% if can_edit %}
+            <div style="margin-top: 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <h3 style="color: var(--text-primary); margin: 0;">GitHub Repository</h3>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleEdit('github')">Edit</button>
+                </div>
+                <div id="github-display">
+                    {% if project.github_link %}
+                    <a href="{{ project.github_link }}" target="_blank" style="color: var(--primary);">{{
+                        project.github_link }}</a>
+                    {% else %}
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">No GitHub link set.</p>
+                    {% endif %}
+                </div>
+                <form id="github-edit" method="POST" action="{{ url_for('update_project_route', group_id=group.id) }}"
+                    style="display: none; margin-top: 0.5rem;">
+                    <input type="url" name="github_link" value="{{ project.github_link or '' }}" class="form-control"
+                        placeholder="https://github.com/...">
+                    <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
+                        <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                        <button type="button" class="btn btn-secondary btn-sm"
+                            onclick="toggleEdit('github')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+
+            <!-- Documents -->
+            <h3 style="color: var(--text-primary); margin-bottom: 0.5rem; margin-top: 2rem;">Documents</h3>
+            {% if project.documents %}
+            <ul style="list-style: none; padding: 0;">
+                {% for doc in project.documents %}
+                <li style="padding: 0.5rem; border-bottom: 1px solid var(--border-primary);">
+                    <a href="{{ url_for('download_content', content_id=doc.id) }}" target="_blank"
+                        style="color: var(--primary); text-decoration: none; font-weight: bold;">
+                        {{ doc.title }}
+                    </a>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">{{ doc.filename }}</div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">No documents uploaded.</p>
+            {% endif %}
+
+            {% if can_edit %}
+            <div
+                style="margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-primary);">
+                <h4 style="margin-bottom: 0.5rem; color: var(--text-primary);">Upload Document</h4>
+                <form method="POST" action="{{ url_for('upload_project_content_route', group_id=group.id) }}"
+                    enctype="multipart/form-data">
+                    <div class="form-group">
+                        <input type="text" name="title" class="form-control" placeholder="Document title" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="file" name="file" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">Upload</button>
+                </form>
+            </div>
+            {% endif %}
+
+            <script>
+                document.getElementById('problem-content').innerHTML = marked.parse({{ (project.problem_statement if project.problem_statement else '') | tojson }} || '*No problem statement defined yet.*');
+                document.getElementById('progress-content').innerHTML = marked.parse({{ (project.progress if project.progress else '') | tojson }} || '*No progress updates yet.*');
+            </script>
+        </div>
+
+        <!-- Right Column: Tasks Timeline & Tasks List -->
+        <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <h3 style="color: var(--text-primary); margin: 0;">Tasks Timeline</h3>
+                {% if project.tasks %}
+                <button id="toggle-all-tasks" type="button" class="btn btn-secondary btn-sm"
+                    style="font-size: 0.8rem; padding: 0.25rem 0.75rem;" onclick="toggleAllTasks()">Show All
+                    Tasks</button>
+                {% endif %}
+            </div>
+
+            {% if project.tasks %}
+
+            {% set start_date = timeline_start or project.start_date %}
+            {% set end_date = timeline_end or project.end_date %}
+
+            {% if start_date and end_date %}
+            <div class="gantt-chart">
+                <div class="gantt-header">
+                    <span>{{ start_date }}</span>
+                    <span>{{ end_date }}</span>
+                </div>
+                {% set max_days = end_date|date_diff(start_date) %}
+
+                {% for t in project.tasks %}
+                {% set t_start = t.start_date[:10] if t.start_date else (t.created_at[:10] if t.created_at else
+                start_date) %}
+                {% set t_end = t.due_date if t.due_date else end_date %}
+
+                {% set start_offset = t_start|date_diff(start_date) %}
+                {% set duration = t_end|date_diff(t_start) %}
+
+                {% set left_pct = (start_offset / max_days) * 100 %}
+                {% set width_pct = (duration / max_days) * 100 %}
+
+                {% if (left_pct + width_pct) > 0 and left_pct < 100 %} <div class="gantt-row">
+                    {% if left_pct < 0 %} {% set width_pct=width_pct + left_pct %} {% set left_pct=0 %} {% endif %} {%
+                        if (left_pct + width_pct)> 100 %}
+                        {% set width_pct = 100 - left_pct %}
+                        {% endif %}
+
+                        <div class="gantt-bar {% if t.status == 'pending' %}gantt-pending{% elif t.status == 'in_progress' %}gantt-in-progress{% else %}gantt-completed{% endif %}"
+                            style="left: {{ left_pct }}%; width: {{ width_pct }}%;" data-task-name="{{ t.task_name }}"
+                            data-status="{{ t.status|replace('_', ' ')|capitalize }}" data-start="{{ t_start }}"
+                            data-end="{{ t_end }}">
+                            {{ t.task_name }}
+                        </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <ul id="tasks-list" style="list-style: none; padding: 0;">
+            {% for task in project.tasks %}
+            <li class="task-item" data-start-date="{{ task.start_date[:10] if task.start_date else '' }}"
+                data-due-date="{{ task.due_date[:10] if task.due_date else '' }}"
+                style="background-color: var(--bg-hover); padding: 0.75rem; border-radius: 8px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-primary);">
+                <div>
+                    <div
+                        style="font-weight: bold; {% if task.status == 'completed' %}text-decoration: line-through; color: var(--text-secondary);{% endif %}">
+                        {{ task.task_name }}
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                        Start: {{ task.start_date or 'N/A' }} | Due: {{ task.due_date or 'No date' }}
+                        {% if task.previous_due_date %}
+                        <span class="previous-due-date">Previous Due: {{ task.previous_due_date }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    {% if task.status == 'pending' %}
+                    <span class="badge"
+                        style="background-color: var(--warning-light); color: var(--warning-text);">Pending</span>
+                    {% elif task.status == 'in_progress' %}
+                    <span class="badge" style="background-color: var(--info-light); color: var(--info-text);">In
+                        Progress</span>
+                    {% elif task.status == 'completed' %}
+                    <span class="badge"
+                        style="background-color: var(--success-light); color: var(--success-text);">Completed</span>
+                    {% endif %}
+
+                    {% if can_edit %}
+                    <form method="POST"
+                        action="{{ url_for('update_project_task_status_route', group_id=group.id, task_id=task.id) }}"
+                        style="display: inline;">
+                        {% if task.status == 'pending' %}
+                        <input type="hidden" name="status" value="in_progress">
+                        <button type="submit" class="btn btn-secondary btn-sm"
+                            style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" title="Start">▶</button>
+                        {% elif task.status == 'in_progress' %}
+                        <input type="hidden" name="status" value="completed">
+                        <button type="submit" class="btn btn-secondary btn-sm"
+                            style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" title="Complete">✓</button>
+                        {% else %}
+                        <input type="hidden" name="status" value="pending">
+                        <button type="submit" class="btn btn-secondary btn-sm"
+                            style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" title="Reset">↺</button>
+                        {% endif %}
+                    </form>
+                    <form method="POST"
+                        action="{{ url_for('delete_project_task_route', group_id=group.id, task_id=task.id) }}"
+                        style="display: inline;" onsubmit="return confirm('Delete this task?');">
+                        <button type="submit" class="btn btn-danger btn-sm"
+                            style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" title="Delete">✕</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p style="color: var(--text-secondary);">No tasks added yet.</p>
+        {% endif %}
+
+        {% if can_edit %}
+        <div
+            style="margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-primary);">
+            <h4 style="margin-bottom: 0.5rem; color: var(--text-primary);">Add Task</h4>
+            <form method="POST" action="{{ url_for('add_project_task_route', group_id=group.id) }}">
+                <div class="form-group">
+                    <input type="text" name="task_name" class="form-control" placeholder="Task name" required>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Start Date</label>
+                        <input type="date" name="start_date" class="form-control">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Due Date</label>
+                        <input type="date" name="due_date" class="form-control">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Add Task</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+</div>
+
+<!-- Past Meetings -->
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="color: var(--primary); margin: 0;">Past Meetings</h3>
+        {% if can_schedule_meeting %}
+        <a href="{{ url_for('create_meeting_route') }}?group_id={{ group.id }}&is_project_meeting=1"
+            class="btn btn-primary btn-sm">Schedule Project Meeting</a>
+        {% endif %}
+    </div>
+    {% if project.recent_meetings %}
+    <ul style="list-style: none; padding: 0;">
+        {% for meeting in project.recent_meetings %}
+        <li style="padding: 0.75rem; border-bottom: 1px solid var(--border-primary);">
+            <a href="{{ url_for('meeting_detail', meeting_id=meeting.id) }}"
+                style="color: var(--primary); text-decoration: none; font-weight: bold;">
+                {{ meeting.title }}
+            </a>
+            <div style="font-size: 0.85rem; color: var(--text-secondary);">{{ meeting.meeting_time }}</div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p style="color: var(--text-secondary); font-size: 0.9rem;">No meetings found for this group.</p>
+    {% endif %}
+</div>
+
+<!-- Comments Section -->
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="color: var(--primary); margin: 0;">Comments</h3>
+        {% if can_edit_comments %}
+        <div id="comments-actions">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="toggleCommentsEdit()"
+                id="comments-edit-btn">Edit</button>
+            <div id="comments-controls" style="display: none;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="cancelCommentsEdit()">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="submitCommentsForm()">Update</button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <form method="POST" action="{{ url_for('update_project_comments_route', group_id=group.id) }}" id="comments-form">
+        <div id="comments-viewer"
+            style="padding: 1.5rem; border: 1px solid var(--border-primary); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); min-height: 150px;">
+        </div>
+
+        {% if can_edit_comments %}
+        <div id="comments-editor" style="display: none;">
+            <div class="form-group">
+                <textarea name="comments" id="comments-textarea" class="form-control" rows="10"
+                    placeholder="Enter comments...">{{ project.comments if project.comments else '' }}</textarea>
+            </div>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<script>
+    // Initial Render for Comments
+    document.addEventListener('DOMContentLoaded', () => {
+        const commentsText = document.getElementById('comments-textarea') ? document.getElementById('comments-textarea').value : {{ (project.comments if project.comments else '') | tojson }};
+    const viewerElement = document.getElementById('comments-viewer');
+    if (viewerElement) {
+        viewerElement.innerHTML = marked.parse(commentsText || '*No comments yet.*');
+    }
+    filterTasksToCurrentDuration();
+    });
+
+    // Section edit toggling
+    function toggleEdit(section) {
+        const editForm = document.getElementById(section + '-edit');
+        if (editForm) {
+            editForm.style.display = editForm.style.display === 'none' ? 'block' : 'none';
+        }
+        if (section === 'problem') {
+            document.getElementById('problem-content').style.display = editForm.style.display === 'none' ? 'block' : 'none';
+        } else if (section === 'progress') {
+            document.getElementById('progress-content').style.display = editForm.style.display === 'none' ? 'block' : 'none';
+        } else if (section === 'github') {
+            document.getElementById('github-display').style.display = editForm.style.display === 'none' ? 'block' : 'none';
+        }
+    }
+
+    function toggleTitleEdit() {
+        const titleDisplay = document.getElementById('title-display');
+        const titleEdit = document.getElementById('title-edit');
+        if (titleEdit.style.display === 'none') {
+            titleDisplay.style.display = 'none';
+            titleEdit.style.display = 'block';
+        } else {
+            titleDisplay.style.display = 'block';
+            titleEdit.style.display = 'none';
+        }
+    }
+
+    // Task filtering
+    let showingAllTasks = false;
+    const DURATION_START = '{{ timeline_start }}';
+    const DURATION_END = '{{ timeline_end }}';
+
+    function isTaskInCurrentDuration(taskItem) {
+        const startDate = taskItem.dataset.startDate;
+        const dueDate = taskItem.dataset.dueDate;
+        if (!startDate && !dueDate) return true;
+        const taskStart = startDate || dueDate;
+        const taskDue = dueDate || startDate;
+        return taskStart <= DURATION_END && taskDue >= DURATION_START;
+    }
+
+    function filterTasksToCurrentDuration() {
+        const tasks = document.querySelectorAll('.task-item');
+        if (!tasks.length) return;
+        let visibleCount = 0;
+        tasks.forEach(task => {
+            if (isTaskInCurrentDuration(task)) {
+                task.style.display = '';
+                visibleCount++;
+            } else {
+                task.style.display = 'none';
+            }
+        });
+        const btn = document.getElementById('toggle-all-tasks');
+        if (btn) {
+            btn.textContent = `Show All Tasks (${tasks.length})`;
+        }
+    }
+
+    function toggleAllTasks() {
+        showingAllTasks = !showingAllTasks;
+        const tasks = document.querySelectorAll('.task-item');
+        const btn = document.getElementById('toggle-all-tasks');
+        if (showingAllTasks) {
+            tasks.forEach(task => { task.style.display = ''; });
+            if (btn) btn.textContent = 'Show Current Tasks';
+        } else {
+            filterTasksToCurrentDuration();
+            if (btn) btn.textContent = `Show All Tasks (${tasks.length})`;
+        }
+    }
+
+    function toggleCommentsEdit() {
+        document.getElementById('comments-viewer').style.display = 'none';
+        document.getElementById('comments-editor').style.display = 'block';
+        document.getElementById('comments-edit-btn').style.display = 'none';
+        document.getElementById('comments-controls').style.display = 'inline-block';
+    }
+
+    function cancelCommentsEdit() {
+        document.getElementById('comments-viewer').style.display = 'block';
+        document.getElementById('comments-editor').style.display = 'none';
+        document.getElementById('comments-edit-btn').style.display = 'inline-block';
+        document.getElementById('comments-controls').style.display = 'none';
+    }
+
+    function submitCommentsForm() {
+        document.getElementById('comments-form').submit();
+    }
+</script>
+{% endblock %}

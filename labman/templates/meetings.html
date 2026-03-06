@@ -20,7 +20,14 @@
                 style="background-color: var(--bg-hover); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--primary);">
                 <a href="{{ url_for('meeting_detail', meeting_id=meeting.id) }}"
                     style="text-decoration: none; color: inherit;">
-                    <h3 style="color: var(--primary); margin-bottom: 0.5rem;">{{ meeting.title }}</h3>
+                    <h3 style="color: var(--primary); margin-bottom: 0.5rem;">
+                        {{ meeting.title }}
+                        {% if meeting.is_project_meeting %}
+                        <span class="badge"
+                            style="background-color: var(--primary); color: white; margin-left: 0.25rem; font-size: 0.75rem;"
+                            title="Project Meeting">P</span>
+                        {% endif %}
+                    </h3>
                     <p style="color: var(--text-light); margin: 0.25rem 0;">
                         <strong>📅 {{ meeting.meeting_time }}</strong>
                     </p>
@@ -52,16 +59,29 @@
         </div>
     </div>
 
-    <!-- Filter by Tags -->
-    <div style="margin-bottom: 1rem;">
-        <label style="font-weight: bold; margin-right: 1rem;">Filter by Tag:</label>
-        <select onchange="filterByTag(this.value)" class="form-control"
-            style="display: inline-block; width: auto; min-width: 200px;">
-            <option value="">All Meetings</option>
-            {% for tag in available_tags %}
-            <option value="{{ tag }}" {% if request.args.get('tag')==tag %}selected{% endif %}>{{ tag }}</option>
-            {% endfor %}
-        </select>
+    <!-- Filters -->
+    <div style="margin-bottom: 1rem; display: flex; gap: 1.5rem; flex-wrap: wrap;">
+        <div>
+            <label style="font-weight: bold; margin-right: 0.5rem;" for="group-filter">Filter by Group:</label>
+            <select id="group-filter" onchange="filterMeetings()" class="form-control"
+                style="display: inline-block; width: auto; min-width: 200px;">
+                <option value="">All Groups</option>
+                {% for group in groups %}
+                <option value="{{ group.id }}" {% if request.args.get('group')|string==group.id|string %}selected{%
+                    endif %}>{{ group.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label style="font-weight: bold; margin-right: 0.5rem;" for="tag-filter">Filter by Tag:</label>
+            <select id="tag-filter" onchange="filterMeetings()" class="form-control"
+                style="display: inline-block; width: auto; min-width: 200px;">
+                <option value="">All Meetings</option>
+                {% for tag in available_tags %}
+                <option value="{{ tag }}" {% if request.args.get('tag')==tag %}selected{% endif %}>{{ tag }}</option>
+                {% endfor %}
+            </select>
+        </div>
     </div>
 
     <!-- All Meetings List -->
@@ -79,7 +99,14 @@
         <tbody>
             {% for meeting in meetings %}
             <tr>
-                <td><strong>{{ meeting.title }}</strong></td>
+                <td>
+                    <strong>{{ meeting.title }}</strong>
+                    {% if meeting.is_project_meeting %}
+                    <span class="badge"
+                        style="background-color: var(--primary); color: white; margin-left: 0.25rem; font-size: 0.75rem;"
+                        title="Project Meeting">P</span>
+                    {% endif %}
+                </td>
                 <td>{{ meeting.meeting_time }}</td>
                 <td>
                     {% if meeting.group_name %}
@@ -117,12 +144,15 @@
     let currentDate = new Date();
     let calendarInitialized = false;
 
-    function filterByTag(tag) {
-        if (tag) {
-            window.location.href = '{{ url_for("meetings") }}?tag=' + encodeURIComponent(tag);
-        } else {
-            window.location.href = '{{ url_for("meetings") }}';
-        }
+    function filterMeetings() {
+        const tag = document.getElementById('tag-filter').value;
+        const group = document.getElementById('group-filter').value;
+        const urlParams = new URLSearchParams();
+
+        if (tag) urlParams.set('tag', tag);
+        if (group) urlParams.set('group', group);
+
+        window.location.href = '{{ url_for("meetings") }}' + (urlParams.toString() ? '?' + urlParams.toString() : '');
     }
 
     function changeMonth(delta) {
@@ -182,7 +212,7 @@
                 html += `<div style="margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.15rem;">`;
                 dayMeetings.slice(0, 2).forEach(m => {
                     html += `<a href="/meetings/${m.id}" style="text-decoration: none;" onclick="event.stopPropagation()">`;
-                    html += `<div style="background-color: var(--primary); color: var(--text-inverse); font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${m.title}">• ${m.title}</div>`;
+                    html += `<div style="background-color: var(--primary); color: var(--text-inverse); font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${m.title}">• ${m.is_project_meeting ? '[P] ' : ''}${m.title}</div>`;
                     html += `</a>`;
                 });
                 if (dayMeetings.length > 2) {

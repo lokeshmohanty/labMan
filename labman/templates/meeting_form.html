@@ -36,10 +36,11 @@
 
         <div class="form-group">
             <label for="group_id">Research Group</label>
-            <select id="group_id" name="group_id" class="form-control" required>
+            <select id="group_id" name="group_id" class="form-control" required onchange="toggleProjectMeetingOption()">
                 {% for group in groups %}
-                <option value="{{ group.id }}" {% if (meeting and meeting.group_id==group.id) or (not meeting and
-                    lab_group and lab_group.id==group.id) %}selected{% endif %}>
+                <option value="{{ group.id }}" data-has-project="{{ 'true' if group.has_project else 'false' }}" {% if
+                    (meeting and meeting.group_id==group.id) or (not meeting and lab_group and lab_group.id==group.id)
+                    %}selected{% endif %}>
                     {{ group.name }}{% if lab_group and lab_group.id == group.id %} (Lab-wide){% endif %}
                 </option>
                 {% endfor %}
@@ -48,6 +49,39 @@
                 Meeting notifications will be sent to members of the selected group.
             </small>
         </div>
+
+        <div class="form-group" id="project-meeting-container"
+            style="display: none; background-color: var(--bg-hover); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-primary); margin-top: 1rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin: 0;">
+                <input type="checkbox" id="is_project_meeting" name="is_project_meeting" {% if meeting and
+                    meeting.is_project_meeting %}checked{% endif %} style="width: 1.2rem; height: 1.2rem; margin: 0;">
+                <span style="font-weight: 600;">This is a Project Meeting</span>
+            </label>
+            <small style="color: var(--text-light); display: block; margin-top: 0.25rem;">
+                This group has an active project. Checking this box will link the meeting to the project and display it
+                on the Project Detail page. Visibility will sync with the project.
+            </small>
+        </div>
+
+        <script>
+            function toggleProjectMeetingOption() {
+                const groupSelect = document.getElementById('group_id');
+                const selectedOption = groupSelect.options[groupSelect.selectedIndex];
+                const hasProject = selectedOption.getAttribute('data-has-project') === 'true';
+                const container = document.getElementById('project-meeting-container');
+                const checkbox = document.getElementById('is_project_meeting');
+
+                if (hasProject) {
+                    container.style.display = 'block';
+                } else {
+                    container.style.display = 'none';
+                    checkbox.checked = false;
+                }
+            }
+
+            // Run on load
+            document.addEventListener('DOMContentLoaded', toggleProjectMeetingOption);
+        </script>
 
         <div class="form-group">
             <label>Meeting Tags</label>
