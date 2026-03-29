@@ -1,0 +1,228 @@
+.research-page {
+    padding: 2rem;
+}
+
+.research-page .user-email {
+    color: var(--text-secondary);
+    margin: 0.5rem 0 0 0;
+}
+
+.research-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.content-display {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    color: var(--text-primary);
+}
+
+/* Tasks List */
+.tasks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.task-item {
+    padding: 1rem;
+    border-left: 4px solid var(--border-primary);
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+.task-item.status-completed {
+    border-left-color: var(--success);
+}
+
+.task-item.status-in-progress {
+    border-left-color: var(--primary);
+}
+
+.task-item.status-pending {
+    border-left-color: var(--warning);
+}
+
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.task-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.task-status.status-completed {
+    background: var(--success);
+    color: white;
+}
+
+.task-status.status-in-progress {
+    background: var(--primary);
+    color: white;
+}
+
+.task-status.status-pending {
+    background: var(--warning);
+    color: white;
+}
+
+.task-description {
+    color: var(--text-secondary);
+    margin: 0.5rem 0;
+}
+
+.task-dates {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-top: 0.5rem;
+}
+
+/* Gantt Chart */
+.gantt-chart {
+    margin-top: 1rem;
+    overflow-x: auto;
+}
+
+.gantt-header {
+    position: relative;
+    height: 30px;
+    border-bottom: 2px solid var(--border-primary);
+    margin-bottom: 1rem;
+}
+
+.gantt-today-marker {
+    position: absolute;
+    top: 0;
+    bottom: -1rem;
+    width: 2px;
+    background: var(--danger);
+    z-index: 10;
+}
+
+.gantt-today-marker span {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--danger);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.gantt-tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.gantt-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 1rem;
+    align-items: center;
+    min-height: 40px;
+}
+
+.gantt-task-label {
+    font-weight: 500;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gantt-timeline {
+    position: relative;
+    height: 30px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+.gantt-bar {
+    position: absolute;
+    height: 80%;
+    top: 10%;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    padding: 0 0.5rem;
+}
+
+.gantt-bar:hover {
+    filter: brightness(1.1);
+    transform: scaleY(1.05);
+    z-index: 5;
+}
+
+.gantt-bar.status-completed {
+    background: var(--success);
+}
+
+.gantt-bar.status-in-progress {
+    background: var(--primary);
+}
+
+.gantt-bar.status-pending {
+    background: var(--warning);
+}
+
+/* Links Section */
+.links-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.link-item {
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+.link-item a {
+    color: var(--primary);
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.link-item a:hover {
+    text-decoration: underline;
+}
+
+/* Admin Comments */
+.admin-comments {
+    border: 2px solid var(--primary);
+}
+
+.admin-comments .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.admin-comments .card-header h3 {
+    margin: 0;
+}
+
+.admin-comments .edit-actions {
+    display: flex;
+    gap: 0.5rem;
+}

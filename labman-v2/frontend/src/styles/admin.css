@@ -1,0 +1,150 @@
+.tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.tab {
+    background: none;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.tab:hover {
+    color: var(--primary);
+}
+
+.tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.settings-card {
+    max-width: 800px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.config-editor {
+    width: 100%;
+    font-family: 'Fira Code', 'Roboto Mono', monospace;
+    font-size: 0.9rem;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg-secondary);
+    color: var(--text);
+    line-height: 1.5;
+    resize: vertical;
+}
+
+.config-editor:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+}
+
+.info-box {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--info-light);
+    color: var(--info-text);
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.actions {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.settings-form {
+    padding: 1rem 0;
+}
+
+.settings-form h4 {
+    margin: 1.5rem 0 1rem;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+}
+
+.settings-form h4:first-child {
+    margin-top: 0;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.btn-secondary {
+    background: white;
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-secondary);
+    border-color: var(--border-primary);
+}
+
+.w-full {
+    width: 100%;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-secondary {
+    color: var(--text-secondary);
+}
+
+.text-sm {
+    font-size: 0.85rem;
+}
+
+.backup-list table {
+    border-collapse: collapse;
+}
+
+.backup-list th {
+    padding: 0.75rem;
+    border-bottom: 2px solid var(--border);
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.backup-list td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.backup-list tr:last-child td {
+    border-bottom: none;
+}

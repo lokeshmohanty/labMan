@@ -1,0 +1,21 @@
+# LabMan API Configuration
+
+SECRET_KEY = "your-secret-key-change-in-production-use-openssl-rand-hex-32"
+DATABASE_URL = "sqlite:///./labman.db"
+FRONTEND_URL = "http://localhost:5173"
+
+# Lab Configuration
+LAB_NAME = "Lab Manager"
+FIRST_SUPERUSER = "admin@example.com"
+FIRST_SUPERUSER_PASSWORD = "admin123"
+
+# CORS Origins
+BACKEND_CORS_ORIGINS = ["http://localhost:5173", "http://localhost:3000"]
+
+# SMTP Configuration (optional)
+# SMTP_HOST = "smtp.gmail.com"
+# SMTP_PORT = 587
+# SMTP_USER = "your-email@gmail.com"
+# SMTP_PASSWORD = "your-app-password"
+# EMAILS_FROM_EMAIL = "your-email@gmail.com"
+# EMAILS_FROM_NAME = "LabMan"
